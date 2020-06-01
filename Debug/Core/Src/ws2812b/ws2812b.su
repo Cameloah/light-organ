@@ -1,0 +1,14 @@
+ws2812b.c:48:13:ws2812b_gpio_init	40	static
+ws2812b.c:81:13:TIM1_init	24	static
+ws2812b.c:140:13:DMA2_init	16	static
+ws2812b.c:236:13:loadNextFramebufferData	48	static
+ws2812b.c:251:13:WS2812_sendbuf	16	static
+ws2812b.c:298:6:DMA_TransferError	24	static
+ws2812b.c:305:6:DMA_TransferHalfHandler	32	static
+ws2812b.c:331:6:DMA_TransferCompleteHandler	24	static
+ws2812b.c:393:6:DMA2_Stream2_IRQHandler	8	static
+ws2812b.c:408:6:TIM1_UP_TIM10_IRQHandler	8	static
+ws2812b.c:422:6:HAL_TIM_PeriodElapsedCallback	16	static
+ws2812b.c:463:13:ws2812b_set_pixel	40	static
+ws2812b.c:631:6:ws2812b_init	8	static
+ws2812b.c:648:6:ws2812b_handle	8	static

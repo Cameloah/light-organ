@@ -1,0 +1,2 @@
+demo_main.c:36:6:make_pretty_colors	40	static
+demo_main.c:56:5:demo_main	152	static,ignoring_inline_asm
