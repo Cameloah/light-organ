@@ -23,6 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "string.h"
 
 /* USER CODE END Includes */
 
@@ -41,6 +42,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim2;
+DMA_HandleTypeDef hdma_tim2_ch2_ch4;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -50,14 +54,65 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
+static void MX_TIM2_Init(void);
 static void MX_USART2_UART_Init(void);
+
 /* USER CODE BEGIN PFP */
+#define LED_CFG_USE_RGBW                0       /*!< Set to 1 to use RGBW leds.
+                                                    Set to 0 to use WS2812B leds */
+
+#define LED_CFG_LEDS_CNT                8       /*!< Number of leds in a strip row */
+
+#if LED_CFG_USE_RGBW
+#define LED_CFG_BYTES_PER_LED           4
+#else /* LED_CFG_USE_RGBW */
+#define LED_CFG_BYTES_PER_LED           3
+#endif /* !LED_CFG_USE_RGBW */
+
+#define LED_CFG_RAW_BYTES_PER_LED       (LED_CFG_BYTES_PER_LED * 8)
+
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+/*brief           Array of 4x (or 3x) number of leds (R, G, B[, W] colors)
+ */
+static uint8_t
+leds_colors[LED_CFG_BYTES_PER_LED * LED_CFG_LEDS_CNT];
+
+/**
+ * \brief           Temporary array for dual LED with extracted PWM duty cycles
+ *
+ * We need LED_CFG_RAW_BYTES_PER_LED bytes for PWM setup to send all bits.
+ * Before we can send data for first led, we have to send reset pulse, which must be 50us long.
+ * PWM frequency is 800kHz, to achieve 50us, we need to send 40 pulses with 0 duty cycle = make array size MAX(2 * LED_CFG_RAW_BYTES_PER_LED, 40)
+ */
+static uint32_t tmp_led_data[2 * LED_CFG_RAW_BYTES_PER_LED];
+
+static uint8_t          is_reset_pulse;     /*!< Status if we are sending reset pulse or led data */
+static volatile uint8_t is_updating;        /*!< Is updating in progress? */
+static uint32_t         current_led;        /*!< Current LED number we are sending */
+
+void        led_init(void);
+uint8_t     led_update(uint8_t block);
+
+#if LED_CFG_USE_RGBW
+uint8_t     led_set_color(size_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t w);
+uint8_t     led_set_color_all(uint8_t r, uint8_t g, uint8_t b, uint8_t w);
+uint8_t     led_set_color_rgbw(size_t index, uint32_t rgbw);
+uint8_t     led_set_color_all_rgbw(uint32_t rgbw);
+#else /* LED_CFG_USE_RGBW */
+uint8_t     led_set_color(size_t index, uint8_t r, uint8_t g, uint8_t b);
+uint8_t     led_set_color_all(uint8_t r, uint8_t g, uint8_t b);
+uint8_t     led_set_color_rgb(size_t index, uint32_t rgb);
+uint8_t     led_set_color_all_rgb(uint32_t rgb);
+#endif /* !LED_CFG_USE_RGBW */
+
+uint8_t     led_is_update_finished(void);
+uint8_t     led_start_reset_pulse(uint8_t num);
 /* USER CODE END 0 */
 
 /**
@@ -88,6 +143,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_TIM2_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
@@ -150,6 +207,56 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 104;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  __HAL_TIM_DISABLE_OCxPRELOAD(&htim2, TIM_CHANNEL_2);
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -179,6 +286,22 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/** 
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void) 
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
 
