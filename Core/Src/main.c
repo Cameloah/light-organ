@@ -57,7 +57,6 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART2_UART_Init(void);
-
 /* USER CODE BEGIN PFP */
 #define LED_CFG_USE_RGBW                0       /*!< Set to 1 to use RGBW leds.
                                                     Set to 0 to use WS2812B leds */
@@ -96,7 +95,6 @@ static uint8_t          is_reset_pulse;     /*!< Status if we are sending reset 
 static volatile uint8_t is_updating;        /*!< Is updating in progress? */
 static uint32_t         current_led;        /*!< Current LED number we are sending */
 
-void        led_init(void);
 uint8_t     led_update(uint8_t block);
 
 #if LED_CFG_USE_RGBW
@@ -122,7 +120,8 @@ uint8_t     led_start_reset_pulse(uint8_t num);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	size_t i;
+	volatile uint32_t timeout;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -148,14 +147,34 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  led_init();
+  led_set_color_all(0x01, 0x00, 0x00, 0x00);
+  led_update(1);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-	HAL_Delay(1000);
+	  for (i = 0; i < LED_CFG_LEDS_CNT; i++) {
+		  led_set_color((i + 0) % LED_CFG_LEDS_CNT, 0x1F, 0, 0, 0);
+		  led_set_color((i + 1) % LED_CFG_LEDS_CNT, 0x1F, 0, 0, 0);
+	      led_set_color((i + 2) % LED_CFG_LEDS_CNT, 0, 0x1F, 0, 0);
+	      led_set_color((i + 3) % LED_CFG_LEDS_CNT, 0, 0x1F, 0, 0);
+	      led_set_color((i + 4) % LED_CFG_LEDS_CNT, 0, 0, 0x1F, 0);
+	      led_set_color((i + 5) % LED_CFG_LEDS_CNT, 0, 0, 0x1F, 0);
+	      led_set_color((i + 6) % LED_CFG_LEDS_CNT, 0, 0, 0, 0x1F);
+	      led_set_color((i + 7) % LED_CFG_LEDS_CNT, 0, 0, 0, 0x1F);
+	      led_update(1);
+	      led_set_color_all(0, 0, 0, 0);
+
+	      timeout = 0x7FFFF;
+	      while (--timeout) {}
+	  }
+
+	//led_set_color_all(0, 0, 0, 0);  led_update(1);   timeout = 0x3FFFFF;  while (timeout--);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -183,9 +202,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 84;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
