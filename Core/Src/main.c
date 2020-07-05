@@ -102,7 +102,7 @@ uint8_t     led_set_color(size_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t
 uint8_t     led_set_color_all(uint8_t r, uint8_t g, uint8_t b, uint8_t w);
 uint8_t     led_set_color_rgbw(size_t index, uint32_t rgbw);
 uint8_t     led_set_color_all_rgbw(uint32_t rgbw);
-#else /* LED_CFG_USE_RGBW */
+#else /* LED_CFG_USE_RGB */
 uint8_t     led_set_color(size_t index, uint8_t r, uint8_t g, uint8_t b);
 uint8_t     led_set_color_all(uint8_t r, uint8_t g, uint8_t b);
 uint8_t     led_set_color_rgb(size_t index, uint32_t rgb);
@@ -159,14 +159,14 @@ int main(void)
   while (1)
   {
 	  for (i = 0; i < LED_CFG_LEDS_CNT; i++) {
-		  led_set_color((i + 0) % LED_CFG_LEDS_CNT, 0x1F, 0, 0, 0);
-		  led_set_color((i + 1) % LED_CFG_LEDS_CNT, 0x1F, 0, 0, 0);
-	      led_set_color((i + 2) % LED_CFG_LEDS_CNT, 0, 0x1F, 0, 0);
-	      led_set_color((i + 3) % LED_CFG_LEDS_CNT, 0, 0x1F, 0, 0);
-	      led_set_color((i + 4) % LED_CFG_LEDS_CNT, 0, 0, 0x1F, 0);
-	      led_set_color((i + 5) % LED_CFG_LEDS_CNT, 0, 0, 0x1F, 0);
-	      led_set_color((i + 6) % LED_CFG_LEDS_CNT, 0, 0, 0, 0x1F);
-	      led_set_color((i + 7) % LED_CFG_LEDS_CNT, 0, 0, 0, 0x1F);
+		  led_set_color((i + 0) % LED_CFG_LEDS_CNT, 0x1F, 0, 0);
+		  led_set_color((i + 1) % LED_CFG_LEDS_CNT, 0x1F, 0, 0);
+	      led_set_color((i + 2) % LED_CFG_LEDS_CNT, 0, 0x1F, 0);
+	      led_set_color((i + 3) % LED_CFG_LEDS_CNT, 0, 0x1F, 0);
+	      led_set_color((i + 4) % LED_CFG_LEDS_CNT, 0, 0, 0x1F);
+	      led_set_color((i + 5) % LED_CFG_LEDS_CNT, 0, 0, 0x1F);
+	      led_set_color((i + 6) % LED_CFG_LEDS_CNT, 0, 0, 0);
+	      led_set_color((i + 7) % LED_CFG_LEDS_CNT, 0, 0, 0);
 	      led_update(1);
 	      led_set_color_all(0, 0, 0, 0);
 
