@@ -90,7 +90,7 @@
 // then for any palette where the first two entries 
 // are the same, a dimmed version of that color will
 // automatically be used as the background color.
-#define AUTO_SELECT_BACKGROUND_COLOR 0
+#define AUTO_SELECT_BACKGROUND_COLOR 1
 
 // If COOL_LIKE_INCANDESCENT is set to 1, colors will 
 // fade out slighted 'reddened', similar to how

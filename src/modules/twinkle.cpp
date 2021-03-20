@@ -11,19 +11,19 @@ CRGB gBackgroundColor = CRGB::Black;
 // palettes are used, and in what order.
 const TProgmemRGBPalette16* ActivePaletteList[] = {
   //&RetroC9_p,
-  //&BlueWhite_p,
+  &BlueWhite_p,
   //&RainbowColors_p,
   &HeatColors_p,
-  //&LavaColors_p,
+  &LavaColors_p,
   &FairyLight_p,
   &RedGreenWhite_p,
   &ForestColors_p,
-  &PartyColors_p,
+  //&PartyColors_p,
   &RedWhite_p,
   &OceanColors_p,
-  //&Snow_p,
-  //&Holly_p,
-  //&Ice_p
+  &Snow_p,
+  &Holly_p,
+  &Ice_p
 };
 
 
