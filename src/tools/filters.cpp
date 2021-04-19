@@ -13,11 +13,11 @@ float envelopeFilter(uint16_t sample, float filter_factor) { //10hz low pass
     return yv[1];
 }
 
-void filters_scale(uint16_t &input, float &max_value, uint16_t &limit) {
-    if(input > max_value)   // store max value if exceeded
-        max_value = input;
+void filters_scale(uint16_t *input, float &max_value, uint16_t limit) {
+    if(*input > max_value)   // store max value if exceeded
+        max_value = *input;
 
-    input = (input / max_value) * 1023; // map to 0 - 1023
+    *input = (uint16_t) (*input / max_value) * 1023; // map to 0 - 1023
 
     if(max_value > limit)   // decrease max_value if it exceeds limit
         max_value -= float(FILTERS_SCALE_MAX_VALUE_DECREASE / FILTERS_FREQ_MAIN_LOOP_HZ);
