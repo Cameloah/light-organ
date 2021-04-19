@@ -2,6 +2,7 @@
 #include <FastLED.h>
 #include "modules/twinkle.h"
 #include "modules/ocean.h"
+#include "modules/music_visualisation.h"
 #include "led_config.h"
 
 #include "tools/spectrum_analyzer.h"
@@ -19,12 +20,8 @@ CRGBArray<LED_NUM_MID> led_arr_mid;
 CRGBArray<LED_NUM_TREBLE_1> led_arr_treble_left;
 CRGBArray<LED_NUM_TREBLE_1> led_arr_treble_right;
 
+//restrain the freq. in which the leds are updated to avoid artifacs
 #define FREQ_LED_UPDATE_HZ            50
-
-//time buffers
-#define FREQ_LOOP_CYCLE_HZ            100
-uint64_t t_0 = 0;
-uint64_t t_end = 0;
 
 void setup() {
   //initialize serial communication
@@ -48,9 +45,10 @@ void setup() {
 
 void loop() {
 
-  //save t_0 time stamp
+  //save t_0 time stamp in loop_timer
   t_0 = micros();
 
+  // read the amplitudes of the 7-frequency band
   spectrum_read_frequencies();
 
   EVERY_N_MILLISECONDS(1000 / FREQ_LED_UPDATE_HZ) {
@@ -71,15 +69,11 @@ void loop() {
   loop_timer++;
   EVERY_N_SECONDS (5){
     Serial.print("loop freq in Hz: ");
-    Serial.println(get_loop_freq());
+    Serial.println(loop_timer_get_loop_freq());
 
   }
 
   //keep loop at constant cycle frequency
-  t_end = micros();
-  uint64_t t_delta = t_end - t_0;
-  if(t_delta < (1000000 / FREQ_LOOP_CYCLE_HZ)) {
-    delayMicroseconds((1000000 / FREQ_LOOP_CYCLE_HZ) - t_delta);
-  }
+  loop_timer_check_cycle_freq();
 }
     

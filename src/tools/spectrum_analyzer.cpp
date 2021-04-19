@@ -36,3 +36,16 @@ void spectrum_read_frequencies()
   }
 }
 
+uint16_t spectrum_total_volume() {
+  uint16_t greatestVol = 0;
+  for (int i = 0; i < 7; i++) {
+    if (spectrum_analyzer_results.amplitude_left[i] > greatestVol) {
+      greatestVol = spectrum_analyzer_results.amplitude_left[i];
+    }
+    if (spectrum_analyzer_results.amplitude_right[i] > greatestVol) {
+      greatestVol = spectrum_analyzer_results.amplitude_right[i];
+    }
+  }
+  return greatestVol;
+}
+
