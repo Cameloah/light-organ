@@ -14,9 +14,9 @@
 typedef struct {
     uint16_t amplitude_left[SPECTRUM_CH_NUM];
     uint16_t amplitude_right[SPECTRUM_CH_NUM];
-} spectrum_analyzer_raw_buffer;
+} SPECTRUM_ANALYZER_RAW_BUFFER_t;
 
-extern spectrum_analyzer_raw_buffer spectrum_analyzer_results;
+extern SPECTRUM_ANALYZER_RAW_BUFFER_t spectrum_analyzer_results;
 
 
 
@@ -29,5 +29,7 @@ void spectrum_analyzer_init();
 void spectrum_read_frequencies();
 
 /// \brief computes the total volume from all 7 freq bands
+///
 /// \return total volume 0 - 1023
+///
 uint16_t spectrum_total_volume();

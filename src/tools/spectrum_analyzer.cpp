@@ -1,6 +1,6 @@
 #include <tools/spectrum_analyzer.h>
 
-spectrum_analyzer_raw_buffer spectrum_analyzer_results;
+SPECTRUM_ANALYZER_RAW_BUFFER_t spectrum_analyzer_results;
 
 
 void spectrum_analyzer_init() {
