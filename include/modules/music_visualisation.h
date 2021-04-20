@@ -2,26 +2,32 @@
 #include "led_config.h"
 #include "tools/filters.h"
 
-
+// debug and system control options
+// #define DEBUG_DISPLAY_BASE_VALUES
 
 // base frequency processing
 #define MUSIC_VIS_SCALE_LIMIT_BASE          400
-#define MUSIC_VIS_BASE_POW_GAIN             181.
+#define MUSIC_VIS_BASE_POW_DIVIDER          181.
 #define MUSIC_VIS_BASE_POW_EXPONENT         4
 
 // mid frequency processing
 #define MUSIC_VIS_SCALE_LIMIT_MID           700
-#define MUSIC_VIS_MID_POW_GAIN              100.
+#define MUSIC_VIS_MID_POW_DIVIDER           100.
 #define MUSIC_VIS_MID_POW_EXPONENT          3
 
 // treble frequency processing
 #define MUSIC_VIS_SCALE_LIMIT_TREBLE        300
-#define MUSIC_VIS_TREBLE_POW_GAIN           100.
+#define MUSIC_VIS_TREBLE_POW_DIVIDER        100.
 #define MUSIC_VIS_TREBLE_POW_EXPONENT       3
 
 // trigger for led arrays in percent
 #define MUSIC_VIS_BASE_TRIGGER              40
 #define MUSIC_VIS_TREBLE_TRIGGER            50
+
+// fade integer by which the colors are faded back to black
+#define MUSIC_VIS_BASE_FADE                 10
+#define MUSIC_VIS_TREBLE_FADE               2
+
 
 typedef struct
 {
@@ -53,9 +59,14 @@ void music_vis_update();
 
 /// \brief handles the individual value processing for the freq bands
 ///
-/// \return the processed value
+/// \param input pointer to respective buffer for processed data
 ///
-uint16_t music_vis_process_base();
-uint16_t music_vis_process_mid();
-uint16_t music_vis_process_treble();
+void music_vis_process_base(uint16_t* input);
+void music_vis_process_mid(uint16_t* input);
+void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right);
 
+/// \brief handles the animation of the respective led arrays by computing the colors for the leds
+///
+void music_vis_animation_largeshrooms(uint16_t* input);
+void music_vis_animation_whiteshrooms();
+void music_vis_animation_redshrooms();

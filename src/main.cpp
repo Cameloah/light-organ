@@ -9,7 +9,7 @@
 #include "tools/loop_timer.h"
 
 // debug and system control options
-#define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
+// #define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
 #define SYSCTRL_LOOPTIMER               // enable loop frequency control, remember to also set the loop freq in the loop_timer.h
   
 // create the FastLED array containing led colors
@@ -17,7 +17,7 @@ CRGBArray<LED_NUM_BASS_1> led_arr_base_left;
 CRGBArray<LED_NUM_BASS_2> led_arr_base_right;
 CRGBArray<LED_NUM_MID> led_arr_mid;
 CRGBArray<LED_NUM_TREBLE_1> led_arr_treble_left;
-CRGBArray<LED_NUM_TREBLE_1> led_arr_treble_right;
+CRGBArray<LED_NUM_TREBLE_2> led_arr_treble_right;
 
 // save led objects in struct for easy parsing to modules
 LED_MUSHROOMS_SET_t led_array_set = {
@@ -29,7 +29,7 @@ LED_MUSHROOMS_SET_t led_array_set = {
 };
 
 // restrain the freq. in which the leds are updated to avoid artifacts
-#define FREQ_LED_UPDATE_HZ            50
+#define FREQ_LED_UPDATE_HZ            FREQ_LOOP_CYCLE_HZ
 
 void setup() {
   // initialize serial communication
@@ -75,6 +75,7 @@ void loop() {
 
   #ifdef DEBUG_DISPLAY_LOOP_FRQ
   EVERY_N_SECONDS (5){
+    // calculate the loop time and print. serial comm only decreases loop freq when serial.print is called
     Serial.print("loop freq in Hz: ");
     Serial.println(loop_timer_get_loop_freq());
   }

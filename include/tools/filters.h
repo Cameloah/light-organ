@@ -4,8 +4,8 @@
 // import main loop freq
 #define FILTERS_FREQ_MAIN_LOOP_HZ               FREQ_LOOP_CYCLE_HZ
 
-// how how much the stored max value is decreasing per second
-#define FILTERS_SCALE_MAX_VALUE_DECREASE        40
+// how much the stored max value is decreasing per second
+#define FILTERS_SCALE_MAX_VALUE_DECREASE        40.
 
 /// \brief WIP
 ///
