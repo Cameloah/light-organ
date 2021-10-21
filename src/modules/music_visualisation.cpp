@@ -129,8 +129,5 @@ void music_vis_animation_whiteshrooms(uint16_t* input) {
     // use special fade fct
     led_effects_glow_fade(_module_led_set->leds_whiteshrooms, 2, 10);
     // apply some color
-    _module_led_set->leds_whiteshrooms.fill_gradient_RGB(CRGB::Yellow, CRGB::Blue);
-    for(int i = num_leds_triggered; i < _module_led_set->leds_whiteshrooms.size(); i++) {
-        _module_led_set->leds_whiteshrooms[i] = CRGB::Black;
-    }
+    led_effect_fill_gradient_interval(_module_led_set->leds_whiteshrooms, 0, num_leds_triggered, CRGB::Blue, CRGB::Yellow);
 }
