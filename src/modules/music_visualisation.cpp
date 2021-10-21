@@ -10,10 +10,25 @@ float _music_vis_raw_max_input_treble_r       = 0;
 // references for led array set
 LED_MUSHROOMS_SET_t* _module_led_set;
 
+LED_EFFECTS_SPARKLE_t _music_vis_sparkle_base_left = {
+    NULL,
+    MUSIC_VIS_BASE_DELAYTOSPARK_MS,
+    MUSIC_VIS_BASE_DELAYINTERSPARK_MS,
+    0,
+    MUSIC_VIS_BASE_TIMESPARKLES_MS,
+    MUSIC_VIS_BASE_SPARKLE_FADE,
+};
+
+LED_EFFECTS_SPARKLE_t _music_vis_sparkle_base_right;
+
 void music_vis_init(LED_MUSHROOMS_SET_t* user_buffer) {
     // import user buffer
-    // memcpy((uint8_t*) _led_array_set, (uint8_t*) user_buffer, sizeof(LED_MUSHROOMS_SET_t));
     _module_led_set = user_buffer;
+    // fill second sparkle buffer with data
+    memcpy(&_music_vis_sparkle_base_right, &_music_vis_sparkle_base_left, sizeof(LED_EFFECTS_SPARKLE_t));
+    // assign corresponding led array to buffer
+    _music_vis_sparkle_base_left.led_array = &_module_led_set->leds_largeshrooms_left;
+    _music_vis_sparkle_base_right.led_array = &_module_led_set->leds_largeshrooms_right;
     // initialize the spectrumanalyzer arduino shield
     spectrum_analyzer_init();
 }
@@ -32,6 +47,8 @@ void music_vis_update() {
 
     // animate leds in large shrooms
     music_vis_animation_largeshrooms(&volume_arr.volume_base);
+    // animate leds in the white shrooms
+    music_vis_animation_whiteshrooms(&volume_arr.volume_mid);
 
 }
 
@@ -65,6 +82,12 @@ void music_vis_process_mid(uint16_t* input) {
     // scale the measured amplitudes to a max of 1023
     filters_scale(input, _music_vis_raw_max_input_mid, MUSIC_VIS_SCALE_LIMIT_MID);
     *input = pow(*input / MUSIC_VIS_MID_POW_DIVIDER, MUSIC_VIS_MID_POW_EXPONENT);
+    
+    #ifdef DEBUG_DISPLAY_MID_VALUES
+    Serial.print(*input);
+    Serial.print("\t");
+    Serial.println(_music_vis_raw_max_input_mid);
+    #endif
 }
 
 void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right) {
@@ -80,14 +103,34 @@ void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right) {
 }
 
 void music_vis_animation_largeshrooms(uint16_t* input) {
-    //display base for RnD purposes
+    // fade all leds before new instructions follow
+    fade_raw(_module_led_set->leds_largeshrooms_left, _module_led_set->leds_largeshrooms_left.size(), MUSIC_VIS_BASE_FADE);
+    fade_raw(_module_led_set->leds_largeshrooms_right, _module_led_set->leds_largeshrooms_right.size(), MUSIC_VIS_BASE_FADE);
+
+    bool trigger_flag = false;
+
+    // check for trigger
     if(*input > (uint16_t) MUSIC_VIS_BASE_TRIGGER * 10.24) {
+        // apply base color
         _module_led_set->leds_largeshrooms_left = CRGB::Red;
         _module_led_set->leds_largeshrooms_right = CRGB::Red;
+        // raise trigger flag
+        trigger_flag = true;
     }
 
-    else {
-        fade_raw(_module_led_set->leds_largeshrooms_left, _module_led_set->leds_largeshrooms_left.size(), MUSIC_VIS_BASE_FADE);
-        fade_raw(_module_led_set->leds_largeshrooms_right, _module_led_set->leds_largeshrooms_right.size(), MUSIC_VIS_BASE_FADE);
+    // release some sparkles after a predefined delay
+    led_effects_run_sparkle(&_music_vis_sparkle_base_right, &trigger_flag);
+    led_effects_run_sparkle(&_music_vis_sparkle_base_left, &trigger_flag);
+}
+
+void music_vis_animation_whiteshrooms(uint16_t* input) {
+    // map total volume to number of white shrooms
+    uint8_t num_leds_triggered = map(*input, 0, 1024, 0, _module_led_set->leds_whiteshrooms.size());
+    // use special fade fct
+    led_effects_glow_fade(_module_led_set->leds_whiteshrooms, 2, 10);
+    // apply some color
+    _module_led_set->leds_whiteshrooms.fill_gradient_RGB(CRGB::Yellow, CRGB::Blue);
+    for(int i = num_leds_triggered; i < _module_led_set->leds_whiteshrooms.size(); i++) {
+        _module_led_set->leds_whiteshrooms[i] = CRGB::Black;
     }
 }

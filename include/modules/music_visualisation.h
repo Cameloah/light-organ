@@ -1,10 +1,11 @@
 #include <FastLED.h>
 #include "led_config.h"
+#include "modules/led_effects.h"
 #include "tools/filters.h"
 
 // debug and system control options
 // #define DEBUG_DISPLAY_BASE_VALUES
-
+#define DEBUG_DISPLAY_MID_VALUES
 // base frequency processing
 #define MUSIC_VIS_SCALE_LIMIT_BASE          400
 #define MUSIC_VIS_BASE_POW_DIVIDER          181.
@@ -25,7 +26,12 @@
 #define MUSIC_VIS_TREBLE_TRIGGER            50
 
 // fade integer by which the colors are faded back to black
-#define MUSIC_VIS_BASE_FADE                 10
+#define MUSIC_VIS_BASE_FADE                 5
+#define MUSIC_VIS_BASE_DELAYTOSPARK_MS      500
+#define MUSIC_VIS_BASE_DELAYINTERSPARK_MS   10
+#define MUSIC_VIS_BASE_TIMESPARKLES_MS      1500
+#define MUSIC_VIS_BASE_SPARKLE_FADE         30
+
 #define MUSIC_VIS_TREBLE_FADE               2
 
 
@@ -54,6 +60,8 @@ typedef struct
 void music_vis_init(LED_MUSHROOMS_SET_t* user_buffer);
 
 /// \brief updater for music visualisation
+/// calls all necessary functions to create the light effects using the amplitudes
+/// from the spectrum analyzer
 ///
 void music_vis_update();
 
@@ -68,5 +76,5 @@ void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right);
 /// \brief handles the animation of the respective led arrays by computing the colors for the leds
 ///
 void music_vis_animation_largeshrooms(uint16_t* input);
-void music_vis_animation_whiteshrooms();
+void music_vis_animation_whiteshrooms(uint16_t* input);
 void music_vis_animation_redshrooms();

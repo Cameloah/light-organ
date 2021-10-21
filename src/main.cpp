@@ -73,15 +73,18 @@ void loop() {
 
   loop_timer++;
 
-  #ifdef DEBUG_DISPLAY_LOOP_FRQ
+#ifdef DEBUG_DISPLAY_LOOP_FRQ
   EVERY_N_SECONDS (5){
     // calculate the loop time and print. serial comm only decreases loop freq when serial.print is called
     Serial.print("loop freq in Hz: ");
     Serial.println(loop_timer_get_loop_freq());
   }
-  #endif
+#endif
 
+#ifdef SYSCTRL_LOOPTIMER
   // keep loop at constant cycle frequency
   loop_timer_check_cycle_freq();
+#endif
+
 }
     
