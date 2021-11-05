@@ -34,6 +34,19 @@ void spectrum_read_frequencies()
     digitalWrite(STROBE, HIGH);
     digitalWrite(STROBE, LOW);
   }
+
+#ifdef DEBUG_DISPLAY_SPECTRUM_AMPLITUDES
+    Serial.print(spectrum_analyzer_results.amplitude_left[5]);
+    Serial.print("\t");
+    Serial.print(spectrum_analyzer_results.amplitude_left[5]);
+    Serial.print("\t");
+
+  Serial.print(spectrum_analyzer_results.amplitude_left[6]);
+  Serial.print("\t");
+  Serial.println(spectrum_analyzer_results.amplitude_right[6]);
+  Serial.print("\t");
+#endif
+
 }
 
 uint16_t spectrum_total_volume() {

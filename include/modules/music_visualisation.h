@@ -5,7 +5,7 @@
 
 // debug and system control options
 // #define DEBUG_DISPLAY_BASE_VALUES
-#define DEBUG_DISPLAY_MID_VALUES
+// #define DEBUG_DISPLAY_MID_VALUES
 // base frequency processing
 #define MUSIC_VIS_SCALE_LIMIT_BASE          400
 #define MUSIC_VIS_BASE_POW_DIVIDER          181.
@@ -27,8 +27,8 @@
 
 // fade integer by which the colors are faded back to black
 #define MUSIC_VIS_BASE_FADE                 5
-#define MUSIC_VIS_BASE_DELAYTOSPARK_MS      500
-#define MUSIC_VIS_BASE_DELAYINTERSPARK_MS   10
+#define MUSIC_VIS_BASE_DELAYTOSPARK_MS      1000
+#define MUSIC_VIS_BASE_DELAYINTERSPARK_MS   20
 #define MUSIC_VIS_BASE_TIMESPARKLES_MS      1500
 #define MUSIC_VIS_BASE_SPARKLE_FADE         30
 
@@ -77,4 +77,4 @@ void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right);
 ///
 void music_vis_animation_largeshrooms(uint16_t* input);
 void music_vis_animation_whiteshrooms(uint16_t* input);
-void music_vis_animation_redshrooms();
+void music_vis_animation_redshrooms(uint16_t* input_left, uint16_t* input_right);

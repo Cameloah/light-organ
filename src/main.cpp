@@ -55,7 +55,7 @@ void loop() {
   t_0 = micros();
 
   EVERY_N_MILLISECONDS(1000 / FREQ_LED_UPDATE_HZ) {
-    /*
+
     twinkle_update(led_arr_base_left);
     twinkle_update(led_arr_base_right);
 
@@ -63,9 +63,9 @@ void loop() {
 
     twinkle_update(led_arr_treble_right);
     twinkle_update(led_arr_treble_left);
-    */
 
-    music_vis_update();
+
+    //music_vis_update();
   }
 
   // execute led colors

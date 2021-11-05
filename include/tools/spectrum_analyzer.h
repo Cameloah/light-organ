@@ -4,6 +4,8 @@
 #include <avr/power.h>
 #endif
 
+// #define DEBUG_DISPLAY_SPECTRUM_AMPLITUDES
+
 #define STROBE                      4
 #define RESET                       5
 #define DC_left                     A0

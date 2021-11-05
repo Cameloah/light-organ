@@ -45,10 +45,10 @@ void music_vis_update() {
     music_vis_process_mid(&volume_arr.volume_mid);
     music_vis_process_treble(&volume_arr.volume_treble_left, &volume_arr.volume_treble_right);
 
-    // animate leds in large shrooms
+    // animate leds in shrooms
     music_vis_animation_largeshrooms(&volume_arr.volume_base);
-    // animate leds in the white shrooms
     music_vis_animation_whiteshrooms(&volume_arr.volume_mid);
+    music_vis_animation_redshrooms(&volume_arr.volume_treble_left, &volume_arr.volume_treble_right);
 
 }
 
@@ -92,8 +92,8 @@ void music_vis_process_mid(uint16_t* input) {
 
 void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right) {
     // select both stereo channels and presave them in buffers
-    *input_left = spectrum_analyzer_results.amplitude_left[6];
-    *input_right = spectrum_analyzer_results.amplitude_right[6];
+    *input_left = spectrum_analyzer_results.amplitude_left[5];
+    *input_right = spectrum_analyzer_results.amplitude_right[5];
     // scale the measured amplitudes to a max of 1023
     filters_scale(input_left, _music_vis_raw_max_input_treble_l, MUSIC_VIS_SCALE_LIMIT_TREBLE);
     filters_scale(input_right, _music_vis_raw_max_input_treble_r, MUSIC_VIS_SCALE_LIMIT_TREBLE);
@@ -130,4 +130,21 @@ void music_vis_animation_whiteshrooms(uint16_t* input) {
     led_effects_glow_fade(_module_led_set->leds_whiteshrooms, 2, 10);
     // apply some color
     led_effect_fill_gradient_interval(_module_led_set->leds_whiteshrooms, 0, num_leds_triggered, CRGB::Blue, CRGB::Yellow);
+}
+
+void music_vis_animation_redshrooms(uint16_t* input_left, uint16_t* input_right) {
+    // fade all leds before new instructions follow
+    fade_raw(_module_led_set->leds_redshrooms_left, _module_led_set->leds_redshrooms_left.size(), MUSIC_VIS_TREBLE_FADE);
+    fade_raw(_module_led_set->leds_redshrooms_right, _module_led_set->leds_redshrooms_right.size(), MUSIC_VIS_TREBLE_FADE);
+
+    // check for trigger
+    if(*input_left > (uint16_t) MUSIC_VIS_TREBLE_TRIGGER * 10.24) {
+        // apply some color
+        _module_led_set->leds_redshrooms_left = CRGB::Red;
+    }
+
+    if(*input_right > (uint16_t) MUSIC_VIS_TREBLE_TRIGGER * 10.24) {
+        // apply some color
+        _module_led_set->leds_redshrooms_right = CRGB::Red;
+    }
 }
