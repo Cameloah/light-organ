@@ -8,8 +8,12 @@
 #include "tools/filters.h"
 #include "tools/loop_timer.h"
 
+#ifdef ESP32
+#include "wifilight.h"  // the wifi light feature requires a ESP32 development board
+#endif
+
 // debug and system control options
-// #define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
+#define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
 #define SYSCTRL_LOOPTIMER               // enable loop frequency control, remember to also set the loop freq in the loop_timer.h
   
 // create the FastLED array containing led colors
@@ -31,6 +35,8 @@ LED_MUSHROOMS_SET_t led_array_set = {
 // restrain the freq. in which the leds are updated to avoid artifacts
 #define FREQ_LED_UPDATE_HZ            FREQ_LOOP_CYCLE_HZ
 
+bool state_machine_ambient_flag = false;
+
 void setup() {
   // initialize serial communication
   Serial.begin(115200);
@@ -46,6 +52,11 @@ void setup() {
   FastLED.addLeds<LED_TYPE, LED_PIN_TREBLE_1, COLOR_ORDER>(led_arr_treble_left, LED_NUM_TREBLE_1).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE, LED_PIN_TREBLE_2, COLOR_ORDER>(led_arr_treble_right, LED_NUM_TREBLE_2).setCorrection(TypicalLEDStrip);
 
+#ifdef ESP32
+    // init wifi module
+    wifilight_init(led_arr_mid);
+#endif
+
 }
 
 
@@ -54,18 +65,51 @@ void loop() {
   // save t_0 time stamp in loop_timer
   t_0 = micros();
 
+#ifdef ESP32
+    // run wifi update routine
+    wifilight_update();
+#endif
+
   EVERY_N_MILLISECONDS(1000 / FREQ_LED_UPDATE_HZ) {
 
-    twinkle_update(led_arr_base_left);
-    twinkle_update(led_arr_base_right);
+        // state machine
+        if(!lights[0].lightState && !lights[1].lightState) {
+            // both modes off, clear all leds
+            fadeToBlackBy(led_arr_mid, led_arr_mid.size(), 1);
+            fadeToBlackBy(led_arr_base_left, led_arr_base_left.size(), 1);
+            fadeToBlackBy(led_arr_base_right, led_arr_base_right.size(), 1);
+            fadeToBlackBy(led_arr_treble_left, led_arr_treble_left.size(), 1);
+            fadeToBlackBy(led_arr_treble_right, led_arr_treble_right.size(), 1);
 
-    ocean_update(led_arr_mid);
+            state_machine_ambient_flag = false; // mark ambient light mode as default
+        }
 
-    twinkle_update(led_arr_treble_right);
-    twinkle_update(led_arr_treble_left);
+        else if (lights[0].lightState && !lights[1].lightState) {
+            // light organ active
+            music_vis_update();
+            state_machine_ambient_flag = false; // mark current state
+        }
 
+        else if (!lights[0].lightState && lights[1].lightState) {
+            // ambient light active
+            twinkle_update(led_arr_base_left);
+            twinkle_update(led_arr_base_right);
+            ocean_update(led_arr_mid);
+            twinkle_update(led_arr_treble_right);
+            twinkle_update(led_arr_treble_left);
+            state_machine_ambient_flag = true; // mark current state
+        }
 
-    //music_vis_update();
+        else {
+            // both modes have been activated
+            if (state_machine_ambient_flag == false)
+                // ambient light has been activated while light organ was still on
+                lights[0].lightState = 0;   // turn off light organ
+
+            else
+                // light organ has been activated while ambient was still on
+                lights[1].lightState = 0;   // turn off ambient
+        }
   }
 
   // execute led colors

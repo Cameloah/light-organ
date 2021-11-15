@@ -3,16 +3,16 @@
 
 uint32_t loop_timer         = 0;
 double loop_time            = 0;
-double timer_start          = 0;
+double loop_timer_start     = 0;
 uint64_t t_0                = 0;
 uint64_t t_end              = 0;
 
 
 float loop_timer_get_loop_freq() {
-    loop_time = millis() - timer_start;
+    loop_time = millis() - loop_timer_start;
     loop_time = loop_time / loop_timer;
     loop_timer = 0;
-    timer_start = millis();
+    loop_timer_start = millis();
     return 1000.f/loop_time;
 }
 
