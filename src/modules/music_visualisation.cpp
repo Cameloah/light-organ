@@ -21,19 +21,21 @@ LED_EFFECTS_SPARKLE_t _music_vis_sparkle_base_left = {
 
 LED_EFFECTS_SPARKLE_t _music_vis_sparkle_base_right;
 
-void music_vis_init(LED_MUSHROOMS_SET_t* user_buffer) {
-    // import user buffer
-    _module_led_set = user_buffer;
+void music_vis_init() {
     // fill second sparkle buffer with data
     memcpy(&_music_vis_sparkle_base_right, &_music_vis_sparkle_base_left, sizeof(LED_EFFECTS_SPARKLE_t));
-    // assign corresponding led array to buffer
-    _music_vis_sparkle_base_left.led_array = &_module_led_set->leds_largeshrooms_left;
-    _music_vis_sparkle_base_right.led_array = &_module_led_set->leds_largeshrooms_right;
     // initialize the spectrumanalyzer arduino shield
     spectrum_analyzer_init();
 }
 
-void music_vis_update() {
+void music_vis_update(LED_MUSHROOMS_SET_t* user_buffer) {
+    // import user buffer
+    _module_led_set = user_buffer;
+
+    // assign corresponding led array to buffer
+    _music_vis_sparkle_base_left.led_array = &_module_led_set->leds_largeshrooms_left;
+    _music_vis_sparkle_base_right.led_array = &_module_led_set->leds_largeshrooms_right;
+
     // buffer for processed input values
     MUSIC_VIS_VOLUME_t volume_arr;
 

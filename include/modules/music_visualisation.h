@@ -34,14 +34,14 @@
 
 #define MUSIC_VIS_TREBLE_FADE               2
 
-
+// create the FastLED array as a struct containing led colors
 typedef struct
 {
-    CRGBSet& leds_largeshrooms_left;
-    CRGBSet& leds_largeshrooms_right;
-    CRGBSet& leds_whiteshrooms;
-    CRGBSet& leds_redshrooms_left;
-    CRGBSet& leds_redshrooms_right;
+    CRGBArray<LED_NUM_BASS_1> leds_largeshrooms_left;
+    CRGBArray<LED_NUM_BASS_2> leds_largeshrooms_right;
+    CRGBArray<LED_NUM_MID> leds_whiteshrooms;
+    CRGBArray<LED_NUM_TREBLE_1> leds_redshrooms_left;
+    CRGBArray<LED_NUM_TREBLE_2> leds_redshrooms_right;
 } LED_MUSHROOMS_SET_t;
 
 typedef struct
@@ -57,13 +57,13 @@ typedef struct
 ///
 /// \param user_buffer structs of references of the 5 different led arrays
 ///
-void music_vis_init(LED_MUSHROOMS_SET_t* user_buffer);
+void music_vis_init();
 
 /// \brief updater for music visualisation
 /// calls all necessary functions to create the light effects using the amplitudes
 /// from the spectrum analyzer
 ///
-void music_vis_update();
+void music_vis_update(LED_MUSHROOMS_SET_t* user_buffer);
 
 /// \brief handles the individual value processing for the freq bands
 ///
