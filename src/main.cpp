@@ -8,6 +8,7 @@
 #include "tools/filters.h"
 #include "tools/loop_timer.h"
 #include "wifi_handler.h"
+#include "github_update.h"
 #include "memory_module.h"
 #include "ram_log.h"
 
@@ -53,14 +54,16 @@ void (*module_update[EFFECT_MODULE_NUM])(LED_MUSHROOMS_SET_t *set) = {
 
 void setup() {
     delay(1000);
+    uint8_t retval;
     // Setup USB comm + Web-serial
     DualSerial.begin(115200);
 
     // init eeprom flash
-    DualSerial.println("Initialisiere Speichermodul...");
-    while (!EEPROM.begin(EEPROM_SIZE)) {}
-    DualSerial.println("Erfolgreich.");
-
+    DualSerial.println("Initializing memory");
+    if ((retval = memory_module_init()) != MEMORY_MODULE_ERROR_NO_ERROR) {
+        ram_log_notify(RAM_LOG_ERROR_MEMORY, retval);
+        DualSerial.println("Error");
+    }
 
     // initialize effect modules
     twinkle_init();
@@ -83,10 +86,16 @@ void setup() {
                                                                      TypicalLEDStrip);
 
     // Wi-Fi setup
-    DualSerial.println("Starte Wifi...");
+    DualSerial.println("Starting Wifi...");
     wifi_info_buffer.ap_name = "Magic Light Organ";             // name of the AP when not configured
     wifi_info_buffer.device_name = "Light Organ ";                 // name of the AP when configured
-    wifi_handler_init();
+    retval = wifi_handler_init();
+
+    if (retval != WIFI_HANDLER_ERROR_NO_ERROR)
+        ram_log_notify(RAM_LOG_ERROR_WIFI_HANDLER, retval);
+
+
+    // memory_module_init1();
 }
 
 
@@ -97,7 +106,7 @@ void loop() {
     // run wifi update routine
     wifi_handler_update();
 
-
+    /*
     module_update[module_index_next](&led_array_set_next);
     module_update[module_index_current](&led_array_set_current);
 
@@ -126,6 +135,8 @@ void loop() {
 
     // execute led colors
     FastLED.show();
+
+    */
 
     loop_timer++;
 
