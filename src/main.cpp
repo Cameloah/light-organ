@@ -3,6 +3,7 @@
 #include "modules/twinkle.h"
 #include "modules/ocean.h"
 #include "modules/music_visualisation.h"
+#include "modules/user_interface.h"
 #include "led_config.h"
 
 #include "tools/filters.h"
@@ -137,6 +138,8 @@ void loop() {
     FastLED.show();
 
     */
+
+    ui_serial_comm_handler();
 
     loop_timer++;
 
