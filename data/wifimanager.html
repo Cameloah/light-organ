@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP Wi-Fi Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<div class="topnav">
+  <div class="burger-menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <h1>ESP Wi-Fi Settings</h1>
+  <div class="menu">
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Webserial</a></li>
+    </ul>
+  </div>
+</div>
+<div class="content">
+  <div class="card-grid">
+    <div class="card">
+      <form action="/" method="POST">
+        <p>
+          <label for="ssid">SSID</label>
+          <input type="text" id ="ssid" name="ssid" value="Abenteuer Flusslandschaft"><br>
+          <label for="pass">Password</label>
+          <input type="text" id ="pass" name="pass"><br>
+          <label for="ip">IP Address</label>
+          <input type="text" id ="ip" name="ip" value="192.168.2.73"><br>
+          <label for="gateway">Gateway Address</label>
+          <input type="text" id ="gateway" name="gateway" value="192.168.2.1"><br>
+          <input type ="submit" value ="Submit">
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>
