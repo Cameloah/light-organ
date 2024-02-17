@@ -59,12 +59,14 @@ void setup() {
     // Setup USB comm + Web-serial
     DualSerial.begin(115200);
 
+    /* --------***** LEGACY *****----------------
     // init eeprom flash
     DualSerial.println("Initializing memory");
     if ((retval = memory_module_init()) != MEMORY_MODULE_ERROR_NO_ERROR) {
         ram_log_notify(RAM_LOG_ERROR_MEMORY, retval);
         DualSerial.println("Error");
     }
+
 
     // initialize effect modules
     twinkle_init();
@@ -85,18 +87,15 @@ void setup() {
     FastLED.addLeds<LED_TYPE, LED_PIN_TREBLE_2, COLOR_ORDER>(led_array_set_real.leds_redshrooms_right,
                                                              LED_NUM_TREBLE_2).setCorrection(
                                                                      TypicalLEDStrip);
+    */
 
     // Wi-Fi setup
     DualSerial.println("Starting Wifi...");
-    wifi_info_buffer.ap_name = "Magic Light Organ";             // name of the AP when not configured
-    wifi_info_buffer.device_name = "Light Organ ";                 // name of the AP when configured
-    retval = wifi_handler_init();
+
+    retval = wifi_handler_init("Magic Light Organ", "Light Organ ");
 
     if (retval != WIFI_HANDLER_ERROR_NO_ERROR)
         ram_log_notify(RAM_LOG_ERROR_WIFI_HANDLER, retval);
-
-
-    // memory_module_init1();
 }
 
 
@@ -136,10 +135,10 @@ void loop() {
 
     // execute led colors
     FastLED.show();
+*/
 
-    */
 
-    ui_serial_comm_handler();
+    // ui_serial_comm_handler();
 
     loop_timer++;
 
@@ -155,6 +154,7 @@ void loop() {
     // keep loop at constant cycle frequency
     loop_timer_check_cycle_freq();
 #endif
+
 
 }
     
