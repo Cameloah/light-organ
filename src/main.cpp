@@ -138,7 +138,7 @@ void loop() {
 */
 
 
-    // ui_serial_comm_handler();
+    ui_serial_comm_handler();
 
     loop_timer++;
 
