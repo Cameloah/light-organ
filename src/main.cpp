@@ -143,7 +143,5 @@ void loop() {
     // keep loop at constant cycle frequency
     loop_timer_check_cycle_freq();
 #endif
-
-
 }
     
