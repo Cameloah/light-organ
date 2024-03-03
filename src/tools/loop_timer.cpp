@@ -1,4 +1,5 @@
 #include "tools/loop_timer.h"
+#include "ram_log.h"
 
 
 uint32_t loop_timer         = 0;
@@ -19,7 +20,12 @@ float loop_timer_get_loop_freq() {
 void loop_timer_check_cycle_freq() {
     t_end = micros();
     uint64_t t_delta = t_end - t_0;
-    if(t_delta < (1000000 / FREQ_LOOP_CYCLE_HZ)) {
+    if(t_delta < (1000000 / FREQ_LOOP_CYCLE_HZ))
         delayMicroseconds((1000000 / FREQ_LOOP_CYCLE_HZ) - t_delta);
+
+    else if(t_delta > (1000000 / FREQ_LOOP_CYCLE_HZ * FREQ_REPORT_UPPER_LIMIT)) {
+        String payload = "Loop took to long! Loop freq: " + String(loop_timer_get_loop_freq());
+        ram_log_notify(RAM_LOG_ERROR_SYSTEM, payload.c_str());
     }
+        
 }

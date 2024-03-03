@@ -14,7 +14,7 @@
 #include "ram_log.h"
 
 // debug and system control options
-#define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
+// #define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
 #define SYSCTRL_LOOPTIMER               // enable loop frequency control, remember to also set the loop freq in the loop_timer.h
 
 // create the FastLED array containing led colors
@@ -58,7 +58,6 @@ void setup() {
     uint8_t retval;
     // Setup USB comm + Web-serial
     DualSerial.begin(115200);
-
 
     // initialize effect modules
     twinkle_init();
@@ -108,20 +107,15 @@ void loop() {
 
 
     blend(led_array_set_current.leds_largeshrooms_left, led_array_set_next.leds_largeshrooms_left,
-          led_array_set_real.leds_largeshrooms_left, LED_NUM_BASS_1,
-          blend_opacity);
+          led_array_set_real.leds_largeshrooms_left, LED_NUM_BASS_1, blend_opacity);
     blend(led_array_set_current.leds_largeshrooms_right, led_array_set_next.leds_largeshrooms_right,
-          led_array_set_real.leds_largeshrooms_right, LED_NUM_BASS_2,
-          blend_opacity);
+          led_array_set_real.leds_largeshrooms_right, LED_NUM_BASS_2, blend_opacity);
     blend(led_array_set_current.leds_whiteshrooms, led_array_set_next.leds_whiteshrooms,
-          led_array_set_real.leds_whiteshrooms, LED_NUM_MID,
-          blend_opacity);
+          led_array_set_real.leds_whiteshrooms, LED_NUM_MID, blend_opacity);
     blend(led_array_set_current.leds_redshrooms_left, led_array_set_next.leds_redshrooms_left,
-          led_array_set_real.leds_redshrooms_left, LED_NUM_TREBLE_1,
-          blend_opacity);
+          led_array_set_real.leds_redshrooms_left, LED_NUM_TREBLE_1, blend_opacity);
     blend(led_array_set_current.leds_redshrooms_right, led_array_set_next.leds_redshrooms_right,
-          led_array_set_real.leds_redshrooms_right, LED_NUM_TREBLE_2,
-          blend_opacity);
+          led_array_set_real.leds_redshrooms_right, LED_NUM_TREBLE_2, blend_opacity);
 
     module_update[module_index_current](&led_array_set_real);
 
