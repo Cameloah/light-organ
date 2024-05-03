@@ -48,8 +48,8 @@ void blackout_update(LED_MUSHROOMS_SET_t *set) {
 }
 
 void (*module_update[EFFECT_MODULE_NUM])(LED_MUSHROOMS_SET_t *set) = {
-        animations_update,
         music_vis_update,
+        animations_update,
         blackout_update
 };
 

@@ -5,6 +5,8 @@
 #include "Arduino.h"
 
 #include "modules/user_interface.h"
+#include "tools/loop_timer.h"
+
 #include "wifi_handler.h"
 #include "ram_log.h"
 #include "webserial_monitor.h"
@@ -16,22 +18,33 @@ void ui_unknown() {
 }
 
 void ui_info_help() {
-    DualSerial.print("info                          - system information about the device");
+    DualSerial.println("info                          - system information about the device");
 }
 
 String ui_info() {
-    String fw_version = "\nFirmware version:   " + String(FW_VERSION_MAJOR) + "."+ String(FW_VERSION_MINOR) + "." + String(FW_VERSION_PATCH);
-    DualSerial.println(fw_version.c_str());
-    DualSerial.print("Wifi mode:          "); DualSerial.println(wifi_handler_get_mode());
-    DualSerial.print("Wifi connected to:  "); DualSerial.println(WiFi.isConnected() ? WiFi.SSID() : "not connected");
-    DualSerial.print("IP-address:         "); DualSerial.println(WiFi.isConnected() ? WiFi.localIP().toString() : "");
-    DualSerial.print("Uptime:             "); DualSerial.println(ram_log_time_str(millis()));
+    String fw_version;
+    String info;
+
+    // Construct the firmware version string
+    fw_version += "\nFirmware version:   ";
+    fw_version += String(FW_VERSION_MAJOR) + "." + String(FW_VERSION_MINOR) + "." + String(FW_VERSION_PATCH);
+    fw_version += "\n";
+
+    // Append additional system information to the info string.
+    info += "Wifi mode:          "; info += wifi_handler_get_mode(); info += "\n";
+    info += "Wifi connected to:  "; info += WiFi.isConnected() ? WiFi.SSID() : "not connected"; info += "\n";
+    info += "IP-address:         "; info += WiFi.isConnected() ? WiFi.localIP().toString() : ""; info += "\n";
+    info += "Uptime:             "; info += ram_log_time_str(millis()); info += "\n";
+
+    DualSerial.print(fw_version + info);
+
     ram_log_print_log();
+
     return fw_version;
 }
 
 void ui_debug_help() {
-    DualSerial.print("debug --reboot                        - reboot device\n"
+    DualSerial.println("debug --reboot                        - reboot device\n"
                      "      --update --version [vX.X.X]     - search and upate to desired FW version");
 }
 
@@ -80,6 +93,9 @@ void ui_serial_comm_handler() {
         delay(50); // wait a bit for transfer of all serial data
     uint8_t rx_available_bytes = DualSerial.available();
     if (rx_available_bytes > 0) {
+        // lets pause the loop time reporting for 1 iteration
+        loop_timer_skip_flag = true;
+
         // import entire string until "\n"
         char rx_user_input[rx_available_bytes];
         DualSerial.readBytes(rx_user_input, rx_available_bytes);

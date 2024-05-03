@@ -3,10 +3,11 @@
 // overall loop freq. of the main loop, use this in all timedependent modules
 #define FREQ_LOOP_CYCLE_HZ            100
 
-#define FREQ_REPORT_UPPER_LIMIT       1.1       // equals  to 110%
+#define FREQ_REPORT_UPPER_LIMIT       1.1       // equals  to 90%
 
 extern uint32_t loop_timer;
 extern uint64_t t_0;
+extern bool loop_timer_skip_flag;
 
 /// \brief calculates loop frequency, only correct when 
 ///        loop_timer is updated every loop iteration

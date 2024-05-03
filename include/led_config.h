@@ -8,7 +8,7 @@
 //number of LEDs connected
 #define LED_NUM_BASS_1              31
 #define LED_NUM_BASS_2              29
-#define LED_NUM_MID                 10
+#define LED_NUM_MID                 20
 #define LED_NUM_TREBLE_1            9
 #define LED_NUM_TREBLE_2            6
 
