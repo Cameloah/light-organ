@@ -28,7 +28,7 @@ void loop_timer_check_cycle_freq() {
         // reset flag
         loop_timer_skip_flag = false;
         String payload = "Loop took to long! Loop freq: " + String(loop_timer_get_loop_freq());
-        ram_log_notify(RAM_LOG_ERROR_SYSTEM, payload.c_str());
+        ram_log_notify(RAM_LOG_WARNING, payload.c_str());
     }
         
 }

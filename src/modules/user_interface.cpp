@@ -26,15 +26,21 @@ String ui_info() {
     String info;
 
     // Construct the firmware version string
-    fw_version += "\nFirmware version:   ";
-    fw_version += String(FW_VERSION_MAJOR) + "." + String(FW_VERSION_MINOR) + "." + String(FW_VERSION_PATCH);
-    fw_version += "\n";
+    fw_version += "\nFirmware version:   "
+    + String(FW_VERSION_MAJOR) + "." + String(FW_VERSION_MINOR) + "." + String(FW_VERSION_PATCH) + "\n";
+
+    // get reset reason
+    String boot_msg = String(esp_reset_reason(), HEX);
+    if (boot_msg.length() == 1)
+        boot_msg = "0" + boot_msg;
+    boot_msg = "0x" + boot_msg;
 
     // Append additional system information to the info string.
-    info += "Wifi mode:          "; info += wifi_handler_get_mode(); info += "\n";
-    info += "Wifi connected to:  "; info += WiFi.isConnected() ? WiFi.SSID() : "not connected"; info += "\n";
-    info += "IP-address:         "; info += WiFi.isConnected() ? WiFi.localIP().toString() : ""; info += "\n";
-    info += "Uptime:             "; info += ram_log_time_str(millis()); info += "\n";
+    info = "Wifi mode:          " + wifi_handler_get_mode() + "\n"
+    + "Wifi connected to:  " + (WiFi.isConnected() ? WiFi.SSID() : "not connected") + "\n"
+    + "IP-address:         " + (WiFi.isConnected() ? WiFi.localIP().toString() : "") + "\n"
+    + "Uptime:             " + ram_log_time_str(millis()) + "\n"
+    + "Boot message:       " + boot_msg + "\n\n";
 
     DualSerial.print(fw_version + info);
 

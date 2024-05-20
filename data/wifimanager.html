@@ -1,44 +1,87 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ESP Wi-Fi Settings</title>
+  <title>Device Settings</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
 <div class="topnav">
-  <div class="burger-menu">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-  <h1>ESP Wi-Fi Settings</h1>
-  <div class="menu">
-    <ul>
-      <li><a href="#">Home</a></li>
-      <li><a href="#">Webserial</a></li>
-    </ul>
-  </div>
+  <h1>Device Settings</h1>
 </div>
 <div class="content">
   <div class="card-grid">
     <div class="card">
-      <form action="/" method="POST">
-        <p>
-          <label for="ssid">SSID</label>
-          <input type="text" id ="ssid" name="ssid" value="Abenteuer Flusslandschaft"><br>
-          <label for="pass">Password</label>
-          <input type="text" id ="pass" name="pass"><br>
-          <label for="ip">IP Address</label>
-          <input type="text" id ="ip" name="ip" value="192.168.2.73"><br>
-          <label for="gateway">Gateway Address</label>
-          <input type="text" id ="gateway" name="gateway" value="192.168.2.1"><br>
-          <input type ="submit" value ="Submit">
-        </p>
-      </form>
+      <div class="settings">
+        <form action="/" method="POST">
+          <h2>
+            General
+          </h2>
+          <label for="Device Name">Device Name</label>
+          <input type="text" id ="Device Name" name="Device Name" value=""><br>
+          <div class="twocolumns">
+            <div>
+              <label for="auto updates">Automatic Updates</label>
+            </div>
+            <div class = "test">
+              <input type="checkbox" id="auto updates">
+            </div>
+          </div> 
+          <div class="twocolumns">
+            <div class="test">
+              <label for="specific FW">Install Firmware Version:</label>
+            </div>
+            <div>
+              <input type="text" id ="specific FW" name="specific FW" value="">
+            </div>
+          </div>
+          <div class="twocolumns">
+            <button onclick=checkForUpdates()>
+                Check for Updates
+            </button>
+          </div>
+          <h2>
+            Wifi settings
+          </h2>
+          <p>
+            <label for="ssid">SSID</label>
+            <input type="text" id ="ssid" name="ssid" value="Abenteuer Flusslandschaft"><br>
+            <label for="pass">Password</label>
+            <input type="text" id ="pass" name="pass"><br>
+            <label for="ip">IP Address</label>
+            <input type="text" id ="ip" name="ip" value="192.168.2.73"><br>
+            <label for="gateway">Gateway Address</label>
+            <input type="text" id ="gateway" name="gateway" value="192.168.2.1"><br>
+            <input type ="submit" value ="Submit">
+          </p>
+        </form>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+
+const response1 = fetch("/general-config")
+  .then((x) => x.text())  
+  .then((responseBody) => {
+    const general_config = responseBody.split("\n")
+    document.getElementById("Device Name").value = general_config[0]
+  })
+
+
+const response2 = fetch("/wifi-config")
+  .then((x) => x.text())  
+  .then((responseBody) => {
+    const wifi_credentials = responseBody.split("\n")
+    document.getElementById("ssid").value = wifi_credentials[0]
+    document.getElementById("pass").value = wifi_credentials[1]
+    document.getElementById("ip").value = wifi_credentials[2]
+    document.getElementById("gateway").value = wifi_credentials[3]
+  })
+
+</script>
+
 </body>
 </html>

@@ -15,7 +15,7 @@
 
 // debug and system control options
 // #define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
-#define SYSCTRL_LOOPTIMER               // enable loop frequency control, remember to also set the loop freq in the loop_timer.h
+// #define SYSCTRL_LOOPTIMER               // enable loop frequency control, remember to also set the loop freq in the loop_timer.h
 
 // create the FastLED array containing led colors
 

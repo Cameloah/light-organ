@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ESP WEB SERVER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <script>
+        function save() {
+            const body = "power=" + document.getElementById("power").checked;
+            fetch("/settings", {method: "POST", body: body})
+        }
+    </script>
+
+</head>
+  <body>
+    <div class="topnav">
+      <h1>Settings</h1>
+    </div>
+    <div class="content">
+      <div class="card-grid">
+        <div class="card">
+          <div class="twocolumns">
+            <div>
+              Power
+            </div>
+            <div>
+              <input type="checkbox" id="power">
+            </div>
+          </div> 
+          <div>
+            <button onclick=save()>
+                Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
