@@ -7,7 +7,7 @@
 #include "modules/user_interface.h"
 #include "tools/loop_timer.h"
 
-#include "wifi_handler.h"
+#include "main_project_utils.h"
 #include "ram_log.h"
 #include "webserial_monitor.h"
 #include "version.h"
@@ -51,7 +51,7 @@ String ui_info() {
 
 void ui_debug_help() {
     DualSerial.println("debug --reboot                        - reboot device\n"
-                     "      --update --version [vX.X.X]     - search and upate to desired FW version");
+                       "      --update --version [vX.X.X]     - search and upate to desired FW version");
 }
 
 void ui_debug() {

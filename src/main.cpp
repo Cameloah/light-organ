@@ -9,7 +9,7 @@
 
 #include "tools/filters.h"
 #include "tools/loop_timer.h"
-#include "wifi_handler.h"
+#include "main_project_utils.h"
 #include "github_update.h"
 #include "memory_module.h"
 #include "ram_log.h"
@@ -117,14 +117,15 @@ void setup() {
     uint8_t retval;
 
     DualSerial.println("Starting Wifi...");
-    retval = wifi_handler_init("Magic Light Organ", "Light Organ ");
+    retval = wifi_handler_init("Magic Light Organ");
 
     if (retval != WIFI_HANDLER_ERROR_NO_ERROR)
         ram_log_notify(RAM_LOG_ERROR_WIFI_HANDLER, retval);
 
 
-    // ------- task setup --------- // everything network related will run on core 0, this will start the task
-
+    // ------- task setup --------- // 
+    
+    //everything network related will run on core 0, this will start the task
     xTaskCreatePinnedToCore(
         loop_core_0,
         "Task_network",
