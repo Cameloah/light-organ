@@ -18,44 +18,98 @@
           <h2>
             General
           </h2>
-          <label for="Device Name">Device Name</label>
-          <input type="text" id ="Device Name" name="Device Name" value=""><br>
+          <div class="twocolumns">
+            <div class="setting_box">
+              <label for="Device Name">Device Name</label>
+            </div>
+            <div class="setting_box">
+              <input type="text" id ="Device Name" name="Device Name" value=""><br>
+            </div>
+          </div> 
+          <br><br>
+
+          <h2>
+            Network
+          </h2>
+
+          <div class="twocolumns">
+            <div class="setting_box">
+              <label for="ssid">Wifi Name</label>
+            </div>
+            <div class="setting_box">
+              <input type="text" id ="ssid" name="ssid"><br>
+            </div>
+          </div>
+
+          <div class="twocolumns">
+            <div class="setting_box">
+              <label for="pass">Password</label>
+            </div>
+            <div class="setting_box">
+              <input type="text" id ="pass" name="pass"><br>
+            </div>
+          </div>
+
+          <div class="twocolumns">
+            <div class="setting_box">
+              <label for="ip">IP Address</label>
+            </div>
+            <div class="setting_box">
+              <input type="text" id ="ip" name="ip"><br>
+            </div>
+          </div>
+
+          <div class="twocolumns">
+            <div class="setting_box">
+              <label for="gateway">Gateway Address</label>
+            </div>
+            <div class="setting_box">
+              <input type="text" id ="gateway" name="gateway"><br>
+            </div>
+          </div>
+      
+          <input type ="submit" value ="Submit">
+          <br><br><br>
+
+          <hr width=auto />
+        </form>
+
+          <h2>
+            Advanced
+          </h2>
+         
           <div class="twocolumns">
             <div>
               <label for="auto updates">Automatic Updates</label>
             </div>
-            <div class = "test">
-              <input type="checkbox" id="auto updates">
+            <div class = "setting_box">
+              <label class="switch">
+                <input type="checkbox" id="auto updates">
+                <span class="slider round"></span>
+              </label>
             </div>
           </div> 
+          <br>
+
+          <button onclick=checkForUpdates()>
+            Check for Updates
+          </button>
+          <br><br>
+
           <div class="twocolumns">
-            <div class="test">
+            <div class="setting_box">
               <label for="specific FW">Install Firmware Version:</label>
             </div>
+            <div class="setting_box">
+              <input type="text" id ="specific FW" name="specific FW" value="" width="10px">
+            </div>
             <div>
-              <input type="text" id ="specific FW" name="specific FW" value="">
+              <button onclick=installFW()>
+                Install
+            </button>
             </div>
           </div>
-          <div class="twocolumns">
-            <button onclick=checkForUpdates()>
-                Check for Updates
-            </button>
-          </div>
-          <h2>
-            Wifi settings
-          </h2>
-          <p>
-            <label for="ssid">SSID</label>
-            <input type="text" id ="ssid" name="ssid" value="Abenteuer Flusslandschaft"><br>
-            <label for="pass">Password</label>
-            <input type="text" id ="pass" name="pass"><br>
-            <label for="ip">IP Address</label>
-            <input type="text" id ="ip" name="ip" value="192.168.2.73"><br>
-            <label for="gateway">Gateway Address</label>
-            <input type="text" id ="gateway" name="gateway" value="192.168.2.1"><br>
-            <input type ="submit" value ="Submit">
-          </p>
-        </form>
+          <br><br>
       </div>
     </div>
   </div>

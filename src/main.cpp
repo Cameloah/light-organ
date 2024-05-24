@@ -1,3 +1,4 @@
+#define FASTLED_ESP32_I2S true
 #include <Arduino.h>
 #include <FastLED.h>
 #include "modules/twinkle.h"
@@ -14,10 +15,10 @@
 #include "ram_log.h"
 
 // debug and system control options
-// #define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
-// #define SYSCTRL_LOOPTIMER               // enable loop frequency control, remember to also set the loop freq in the loop_timer.h
+#define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in hz via serial print
+#define SYSCTRL_LOOPTIMER               // enable loop frequency control, remember to also set the loop freq in the loop_timer.h
 
-// create the FastLED array containing led colors
+TaskHandle_t Task_network;
 
 // declare a bunch of memory for the led colours
 LED_MUSHROOMS_SET_t led_array_set_real;         // this one contains the values that get send to the leds
@@ -48,10 +49,20 @@ void blackout_update(LED_MUSHROOMS_SET_t *set) {
 }
 
 void (*module_update[EFFECT_MODULE_NUM])(LED_MUSHROOMS_SET_t *set) = {
-        music_vis_update,
         animations_update,
+        music_vis_update,
         blackout_update
 };
+
+void loop_core_0(void* parameter) {
+    for(;;) {
+        // run wifi update routine
+        wifi_handler_update();
+        ui_serial_comm_handler();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    
+}
 
 void setup() {
     delay(1000);
@@ -79,7 +90,6 @@ void setup() {
                                                              LED_NUM_TREBLE_2).setCorrection(
                                                                      TypicalLEDStrip);
 
-
     // Wi-Fi setup
     DualSerial.println("Starting Wifi...");
 
@@ -88,9 +98,23 @@ void setup() {
     if (retval != WIFI_HANDLER_ERROR_NO_ERROR)
         ram_log_notify(RAM_LOG_ERROR_WIFI_HANDLER, retval);
 
+
     // set all leds to black
     blackout_update(&led_array_set_real);
     FastLED.show();
+
+    /*
+    // setup dual core
+    xTaskCreatePinnedToCore(
+        loop_core_0,
+        "Task_network",
+        8192,
+        NULL,
+        1,
+        &Task_network,
+        0);
+
+    */
 }
 
 
@@ -98,10 +122,7 @@ void loop() {
     // save t_0 time stamp in loop_timer
     t_0 = micros();
 
-    // run wifi update routine
-    wifi_handler_update();
-
-
+    
     module_update[module_index_next](&led_array_set_next);
     module_update[module_index_current](&led_array_set_current);
 
@@ -121,12 +142,9 @@ void loop() {
 
     if (blend_opacity <= 254) {
         blend_opacity++;
-    }
+    }   
 
-    // execute led colors
-    FastLED.show();
-
-
+    wifi_handler_update();
     ui_serial_comm_handler();
 
     loop_timer++;
@@ -138,6 +156,9 @@ void loop() {
         DualSerial.println(loop_timer_get_loop_freq());
     }
 #endif
+
+    // execute led colors
+    FastLED.show();
 
 #ifdef SYSCTRL_LOOPTIMER
     // keep loop at constant cycle frequency
