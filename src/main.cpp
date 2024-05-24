@@ -7,19 +7,13 @@
 #include "modules/user_interface.h"
 #include "led_config.h"
 
+#include "main.h"
 #include "tools/filters.h"
 #include "tools/loop_timer.h"
 #include "main_project_utils.h"
 #include "github_update.h"
 #include "memory_module.h"
 #include "ram_log.h"
-
-
-
-// ---------- DEBUG AND SYSTEM CONTROL ---------- //
-
-// #define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in Hz via serial print
-#define SYSCTRL_LOOPTIMER               // enable loop frequency control, remember to also set the loop freq in the loop_timer.h
 
 
 
@@ -30,7 +24,7 @@ TaskHandle_t Task_network;
 void loop_core_0(void* parameter) {
     for(;;) {
         // run wifi update routine
-        wifi_handler_update();
+        project_utils_update();
         ui_serial_comm_handler();
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
@@ -117,10 +111,7 @@ void setup() {
     uint8_t retval;
 
     DualSerial.println("Starting Wifi...");
-    retval = wifi_handler_init("Magic Light Organ");
-
-    if (retval != WIFI_HANDLER_ERROR_NO_ERROR)
-        ram_log_notify(RAM_LOG_ERROR_WIFI_HANDLER, retval);
+    project_utils_init("Magic Light Organ");
 
 
     // ------- task setup --------- // 

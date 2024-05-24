@@ -8,6 +8,7 @@
 #include "tools/loop_timer.h"
 
 #include "main_project_utils.h"
+#include "network_manager.h"
 #include "ram_log.h"
 #include "webserial_monitor.h"
 #include "version.h"
@@ -36,7 +37,7 @@ String ui_info() {
     boot_msg = "0x" + boot_msg;
 
     // Append additional system information to the info string.
-    info = "Wifi mode:          " + wifi_handler_get_mode() + "\n"
+    info = "Wifi mode:          " + network_manager_get_mode() + "\n"
     + "Wifi connected to:  " + (WiFi.isConnected() ? WiFi.SSID() : "not connected") + "\n"
     + "IP-address:         " + (WiFi.isConnected() ? WiFi.localIP().toString() : "") + "\n"
     + "Uptime:             " + ram_log_time_str(millis()) + "\n"
