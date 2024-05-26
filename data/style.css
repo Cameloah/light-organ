@@ -86,6 +86,14 @@ input[type=text], input[type=number], select {
   width: auto;
 }
 
+input[type=password], input[type=number], select {
+  padding: 12px 20px;
+  display: block;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  width: auto;
+}
+
 label {
   font-size: 1.2rem;
 }
@@ -133,6 +141,18 @@ button:hover {
 
 .button-off:hover {
   background-color: #252524;
+}
+
+button.red {
+  background-color: rgb(173, 15, 15);
+}
+
+button.orange {
+  background-color: rgb(255, 196, 0);
+}
+
+button.green {
+  background-color: rgb(0, 155, 13);
 }
 
 .twocolumns {
