@@ -29,11 +29,24 @@ void spectrum_read_frequencies()
 {
   for (int freq_amp = 0; freq_amp < 7; freq_amp++)
   {
-    spectrum_analyzer_results.amplitude_left[freq_amp] = analogRead(DC_left);
-    spectrum_analyzer_results.amplitude_right[freq_amp] = analogRead(DC_right);
+    spectrum_analyzer_results.amplitude_left[freq_amp] = map(analogRead(DC_left),0 , 4096, 0, 1024);
+    spectrum_analyzer_results.amplitude_right[freq_amp] = map(analogRead(DC_right), 0, 4096, 0, 1024);
     digitalWrite(STROBE, HIGH);
     digitalWrite(STROBE, LOW);
   }
+
+#ifdef DEBUG_DISPLAY_SPECTRUM_AMPLITUDES
+    Serial.print(spectrum_analyzer_results.amplitude_left[5]);
+    Serial.print("\t");
+    Serial.print(spectrum_analyzer_results.amplitude_left[5]);
+    Serial.print("\t");
+
+  Serial.print(spectrum_analyzer_results.amplitude_left[6]);
+  Serial.print("\t");
+  Serial.println(spectrum_analyzer_results.amplitude_right[6]);
+  Serial.print("\t");
+#endif
+
 }
 
 uint16_t spectrum_total_volume() {

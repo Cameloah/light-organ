@@ -1,9 +1,9 @@
 //pin LED strip is connected to
-#define LED_PIN_BASS_1              6
-#define LED_PIN_BASS_2              7
-#define LED_PIN_MID                 9
-#define LED_PIN_TREBLE_1            11
-#define LED_PIN_TREBLE_2            13
+#define LED_PIN_BASS_1              23
+#define LED_PIN_BASS_2              22
+#define LED_PIN_MID                 19
+#define LED_PIN_TREBLE_1            5
+#define LED_PIN_TREBLE_2            4
 
 //number of LEDs connected
 #define LED_NUM_BASS_1              31

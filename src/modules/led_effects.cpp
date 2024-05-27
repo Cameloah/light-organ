@@ -40,8 +40,6 @@ void led_effects_run_sparkle(LED_EFFECTS_SPARKLE_t* user_buffer, bool* trigger) 
     }
 }
 
-//todo next time: color gradient in whiteshrooms einbauen
-
 void led_effects_glow_fade(CRGBSet& user_buffer, uint8_t fade_factor_min, uint8_t fade_factor_max) {
     float fade_fraction = (fade_factor_max - fade_factor_min) / (float) user_buffer.size();
     for(uint8_t i = 0; i < user_buffer.size(); i++) {
