@@ -78,6 +78,7 @@ void setup() {
     delay(500);
     DualSerial.begin(115200);
 
+  
 
     // --------  led setup --------- //
 
@@ -120,7 +121,7 @@ void setup() {
     xTaskCreatePinnedToCore(
         loop_core_0,
         "Task_network",
-        4096,
+        8192,
         NULL,
         1,
         &Task_network,
@@ -134,7 +135,7 @@ void loop() {
     // save t_0 time stamp in loop_timer
     t_0 = micros();
 
-    
+
     // ----------- leds ------------ //
 
     module_update[module_index_next](&led_array_set_next);
