@@ -40,7 +40,7 @@ String ui_info() {
     info = "Wifi mode:          " + network_manager_get_mode() + "\n"
     + "Wifi connected to:  " + (WiFi.isConnected() ? WiFi.SSID() : "not connected") + "\n"
     + "IP-address:         " + (WiFi.isConnected() ? WiFi.localIP().toString() : "") + "\n"
-    + "Uptime:             " + ram_log_time_str(millis()) + "\n"
+    + "Uptime:             " + ram_log_time_str(esp_timer_get_time()) + "\n"
     + "Boot message:       " + boot_msg + "\n\n";
 
     DualSerial.print(fw_version + info);

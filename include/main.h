@@ -19,3 +19,7 @@
 // comment this out to have an always on AP once its spawned
 // #define AP_TIMEOUT                      300000      // 5 min
 #define TIMEOUT_WIFI_CONNECT_MS         5000
+
+// time module settings
+#define TIMEZONE_SEC_OFFSET             3600  // CET is UTC+1
+#define DAYLIGHT_SAVING_SEC_OFFSET      3600  // Additional offset for DST (CEST is UTC+2)
