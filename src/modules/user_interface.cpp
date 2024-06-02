@@ -27,7 +27,7 @@ String ui_info() {
     String info;
 
     // Construct the firmware version string
-    fw_version += "\nFirmware version:   "
+    fw_version += "\nFirmware version:   v"
     + String(FW_VERSION_MAJOR) + "." + String(FW_VERSION_MINOR) + "." + String(FW_VERSION_PATCH) + "\n";
 
     // get reset reason

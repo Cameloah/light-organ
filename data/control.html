@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Device Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<div class="topnav">
+  <h1>Magic Mushroom Light</h1>
+</div>
+<div class="content">
+  <div class="card-grid">
+    <div class="card">
+      <div class="settings">
+
+        <h2>Controls</h2>
+
+        <div class="twocolumns">
+          <div>
+            <label for="musicMode">Music Mode</label>
+          </div>
+          <div class="setting_box">
+            <label class="switch">
+              <input type="checkbox" id="musicMode" onclick="toggleCheckbox(this)">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+        <br>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  fetch("/control/musicmode")
+    .then(response => response.text())
+    .then(responseBody => {
+      const autoUpdateConfig = responseBody.split("\n");
+      document.getElementById("musicMode").checked = autoUpdateConfig[0] === "1";
+    });
+
+  function toggleCheckbox(element) {
+    let xhr = new XMLHttpRequest();
+    const payload = "/control/toggle?" + element.id + "=" + element.checked;
+    xhr.open("GET", payload, true);
+    xhr.send();
+
+    fetch("/control/musicmode")
+      .then(response => response.text())
+      .then(responseBody => {
+        const autoUpdateConfig = responseBody.split("\n");
+        element.checked = autoUpdateConfig[0] === "1";
+      });
+  }
+
+</script>
+
+</body>
+</html>
