@@ -5,8 +5,9 @@
 
 #include "modules/twinkle.h"
 #include "modules/ocean.h"
-#include "modules/music_visualisation.h"
+//#include "modules/music_visualisation.h"
 #include "modules/user_interface.h"
+#include "modules/dmx_manager.h"
 #include "led_config.h"
 #include "main.h"
 #include "tools/filters.h"
@@ -66,7 +67,7 @@ void blackout_update(LED_MUSHROOMS_SET_t *set) {
 void (*module_update[EFFECT_MODULE_NUM])(LED_MUSHROOMS_SET_t *set) = {
         animations_update,
         music_vis_update,
-        blackout_update
+        dmx_update //blackout_update
 };
 
 void led_mode_switch(uint8_t module_index) {
@@ -121,6 +122,7 @@ void setup() {
     // initialize effect modules
     twinkle_init();
     music_vis_init();
+    dmx_init();
 
     //start up FastLED object
     FastLED.addLeds<LED_TYPE, LED_PIN_BASS_1, COLOR_ORDER>(led_array_set_real.leds_largeshrooms_left,
@@ -146,6 +148,8 @@ void setup() {
         led_mode_switch(1);
 
     else led_mode_switch(0);
+
+    led_mode_switch(2);
 
     // --------- network ---------- //
 

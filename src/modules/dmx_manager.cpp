@@ -6,7 +6,7 @@
 
 int transmitPin = 17;       // TX
 int receivePin = 16;        // RX
-int enablePin = 21;         // DE
+int enablePin = 15;         // DE
 
 
 dmx_port_t dmxPort = 1;
