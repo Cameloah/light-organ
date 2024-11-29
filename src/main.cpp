@@ -1,23 +1,22 @@
 #define FASTLED_ESP32_I2S true // keeps esp from crashing when using FastLED and wifi at the same time
-#include <Arduino.h>
+
+#include "main.h"
+
 #include <FastLED.h>
-#include "SPIFFS.h"
 
 #include "modules/twinkle.h"
 #include "modules/ocean.h"
-//#include "modules/music_visualisation.h"
 #include "modules/user_interface.h"
 #include "modules/dmx_manager.h"
+#include "modules/control.h"
+
 #include "led_config.h"
-#include "main.h"
 #include "tools/filters.h"
 #include "tools/loop_timer.h"
-#include "main_project_utils.h"
+
 #include "github_update.h"
 #include "memory_module.h"
 #include "ram_log.h"
-
-
 
 // ------------------ SYSTEM -------------------- //
 
@@ -33,7 +32,6 @@ void loop_core_0(void* parameter) {
     }
 }
 
-MemoryModule control_settings;
 
 // --------------- LED VARIABLES ---------------- //
 
@@ -81,32 +79,6 @@ void led_mode_switch(uint8_t module_index) {
 
 
 
-// ---------------- WEB CONTROL ------------------ //
-
-void webfct_control_serve(AsyncWebServerRequest *request) {
-    request->send(SPIFFS, "/control.html", "text/html");
-}
-
-void webfct_control_get(AsyncWebServerRequest *request){
-    if (request->hasParam("musicMode")) {
-        control_settings.set("musicMode", request->getParam("musicMode")->value().equals("true"), true);
-        
-        if (*control_settings.getBool("musicMode"))
-            led_mode_switch(MODE_MUSIC);
-
-        else led_mode_switch(MODE_AMBIENT);
-    }
-
-    request->send(200, "text/plain", "OK");
-}
-
-void webfct_get_musicMode(AsyncWebServerRequest *request) {
-    String payload = String(*control_settings.getBool("musicMode")) + "\n";
-    request->send(200, "text/plain", payload);
-}
-
-
-
 // ---------------- MAIN SETUP ------------------- //
 
 void setup() {
@@ -114,9 +86,6 @@ void setup() {
     // ---------- system ----------- //
     delay(500);
     DualSerial.begin(115200);
-
-    control_settings.addParameter("musicMode", false);
-    control_settings.loadAll();
 
     // --------  led setup --------- //
 
@@ -145,12 +114,6 @@ void setup() {
     blackout_update(&led_array_set_real);
     FastLED.show();
 
-    if (*control_settings.getBool("musicMode"))
-        led_mode_switch(MODE_MUSIC);
-
-    else led_mode_switch(MODE_AMBIENT);
-
-    //led_mode_switch(MODE_DMX);
 
     // --------- network ---------- //
 
@@ -159,9 +122,8 @@ void setup() {
     DualSerial.println("Starting Wifi...");
     project_utils_init("Magic Light Organ");
 
-    server.on("/control/musicmode", HTTP_GET, webfct_get_musicMode);
-    server.on("/control/toggle", HTTP_GET, webfct_control_get); 
-    server.on("/control", HTTP_GET, webfct_control_serve);
+    control_init();
+    
 
     // ------- task setup --------- // 
     

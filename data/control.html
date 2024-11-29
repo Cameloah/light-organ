@@ -1,13 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Device Settings</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-<div class="topnav">
+  <div class="hamburger-menu">
+    <input id="menu__toggle" type="checkbox" />
+    <label class="menu__btn" for="menu__toggle">
+      <span></span>
+    </label>
+
+    <ul class="menu__box">
+      <li><a class="menu__item" href="/control">Home</a></li>
+			<li><a class="menu__item" href="/settings">Network settings</a></li>
+			<li><a class="menu__item" href="/webserial">Webserial</a></li>
+    </ul>
+  </div>
   <h1>Magic Mushroom Light</h1>
 </div>
 <div class="content">
@@ -16,6 +28,19 @@
       <div class="settings">
 
         <h2>Controls</h2>
+
+        <div class="twocolumns">
+          <div>
+            <label for="ambientMode">Ambient Mode</label>
+          </div>
+          <div class="setting_box">
+            <label class="switch">
+              <input type="checkbox" id="ambientMode" onclick="toggleCheckbox(this)">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+        <br>
 
         <div class="twocolumns">
           <div>
@@ -28,19 +53,26 @@
             </label>
           </div>
         </div>
-        <br>
+        <br><br>
+        
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  fetch("/control/musicmode")
-    .then(response => response.text())
-    .then(responseBody => {
-      const autoUpdateConfig = responseBody.split("\n");
-      document.getElementById("musicMode").checked = autoUpdateConfig[0] === "1";
-    });
+
+  fetchAndUpdate();
+
+  function fetchAndUpdate() {
+    fetch("/control/mode")
+      .then(response => response.text())
+      .then(responseBody => {
+        const autoUpdateConfig = responseBody.split("\n");
+        document.getElementById("ambientMode").checked = autoUpdateConfig[0] === "1";
+        document.getElementById("musicMode").checked = autoUpdateConfig[1] === "1";
+      });
+  }
 
   function toggleCheckbox(element) {
     let xhr = new XMLHttpRequest();
@@ -48,12 +80,7 @@
     xhr.open("GET", payload, true);
     xhr.send();
 
-    fetch("/control/musicmode")
-      .then(response => response.text())
-      .then(responseBody => {
-        const autoUpdateConfig = responseBody.split("\n");
-        element.checked = autoUpdateConfig[0] === "1";
-      });
+    fetchAndUpdate();
   }
 
 </script>

@@ -1,9 +1,11 @@
 #include <Arduino.h>
 #include <esp_dmx.h>
 
-#include "modules/dmx_manager.h"
-#include "main_project_utils.h"
 #include "main.h"
+#include "modules/dmx_manager.h"
+
+#include "main_project_utils.h"
+#include "ram_log.h"
 
 int transmitPin = 17;       // TX
 int receivePin = 16;        // RX

@@ -1,5 +1,10 @@
 #pragma once
 
+#include <Arduino.h>
+#include "main_project_utils.h"
+#include "SPIFFS.h"
+
+
 // ---------- DEBUG AND SYSTEM CONTROL ---------- //
 
 // #define DEBUG_DISPLAY_LOOP_FRQ          // use this to output the loop freq in Hz via serial print
