@@ -3,6 +3,7 @@
 
 #include "modules/dmx_manager.h"
 #include "main_project_utils.h"
+#include "main.h"
 
 int transmitPin = 17;       // TX
 int receivePin = 16;        // RX
@@ -42,27 +43,27 @@ void dmx_init() {
   dmx_set_pin(dmxPort, transmitPin, receivePin, enablePin);
 }
 
-void dmx_update(LED_MUSHROOMS_SET_t* user_buffer) {
+void dmx_listen() {
   /* We need a place to store information about the DMX packets we receive. We
     will use a dmx_packet_t to store that packet information.  */
-  dmx_packet_t packet;
-
+    dmx_packet_t packet;
+    
   /* And now we wait! The DMX standard defines the amount of time until DMX
     officially times out. That amount of time is converted into ESP32 clock
     ticks using the constant `DMX_TIMEOUT_TICK`. If it takes longer than that
     amount of time to receive data, this if statement will evaluate to false. */
   if (dmx_receive(dmxPort, &packet, DMX_TIMEOUT_TICK)) {
-
     if (!packet.err) {
       /* If this is the first DMX data we've received, lets log it! */
       if (!dmxIsConnected) {
         ram_log_notify(RAM_LOG_INFO, "DMX is connected!", true);
+        led_mode_switch(3);
         dmxIsConnected = true;
       }
 
-      dmx_read(dmxPort, data, packet.size);      
-      user_buffer->leds_whiteshrooms = CRGB(data[1], data[2], data[3]);
+      dmx_read(dmxPort, data, packet.size);
     }
+
     else {
       ram_log_notify(RAM_LOG_INFO, "A DMX error occurred.", true);
     }
@@ -70,6 +71,12 @@ void dmx_update(LED_MUSHROOMS_SET_t* user_buffer) {
   
   else if (dmxIsConnected) {
     ram_log_notify(RAM_LOG_INFO, "DMX was disconnected.", true);
+    led_mode_switch(0);
     dmxIsConnected = false;
   }
+}
+
+
+void dmx_update(LED_MUSHROOMS_SET_t* user_buffer) {
+  user_buffer->leds_whiteshrooms = CRGB(data[1], data[2], data[3]);
 }

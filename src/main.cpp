@@ -28,6 +28,7 @@ void loop_core_0(void* parameter) {
         // run wifi update routine
         project_utils_update();
         ui_serial_comm_handler();
+        dmx_listen();
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
@@ -65,9 +66,9 @@ void blackout_update(LED_MUSHROOMS_SET_t *set) {
 
 // holds effects that program will cycle through
 void (*module_update[EFFECT_MODULE_NUM])(LED_MUSHROOMS_SET_t *set) = {
-        animations_update,
+        blackout_update,
         music_vis_update,
-        dmx_update //blackout_update
+        animations_update,
 };
 
 void led_mode_switch(uint8_t module_index) {
@@ -91,9 +92,9 @@ void webfct_control_get(AsyncWebServerRequest *request){
         control_settings.set("musicMode", request->getParam("musicMode")->value().equals("true"), true);
         
         if (*control_settings.getBool("musicMode"))
-            led_mode_switch(1);
+            led_mode_switch(MODE_MUSIC);
 
-        else led_mode_switch(0);
+        else led_mode_switch(MODE_AMBIENT);
     }
 
     request->send(200, "text/plain", "OK");
@@ -122,7 +123,7 @@ void setup() {
     // initialize effect modules
     twinkle_init();
     music_vis_init();
-    dmx_init();
+    //dmx_init();
 
     //start up FastLED object
     FastLED.addLeds<LED_TYPE, LED_PIN_BASS_1, COLOR_ORDER>(led_array_set_real.leds_largeshrooms_left,
@@ -145,11 +146,11 @@ void setup() {
     FastLED.show();
 
     if (*control_settings.getBool("musicMode"))
-        led_mode_switch(1);
+        led_mode_switch(MODE_MUSIC);
 
-    else led_mode_switch(0);
+    else led_mode_switch(MODE_AMBIENT);
 
-    led_mode_switch(2);
+    //led_mode_switch(MODE_DMX);
 
     // --------- network ---------- //
 
@@ -173,6 +174,8 @@ void setup() {
         1,
         &Task_network,
         0);
+
+    delay(2000);
 }
 
 

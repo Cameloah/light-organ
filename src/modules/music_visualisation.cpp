@@ -32,7 +32,7 @@ void music_vis_update(LED_MUSHROOMS_SET_t* user_buffer) {
     // import user buffer
     _module_led_set = user_buffer;
 
-    // assign corresponding led array to buffer
+    // assign corresponding led array to sparkle stuct buffer
     _music_vis_sparkle_base_left.led_array = &_module_led_set->leds_largeshrooms_left;
     _music_vis_sparkle_base_right.led_array = &_module_led_set->leds_largeshrooms_right;
 
@@ -42,7 +42,7 @@ void music_vis_update(LED_MUSHROOMS_SET_t* user_buffer) {
     // read the amplitudes of the 7-frequency band
     spectrum_read_frequencies();
 
-    // process base, mid and treble
+    // process volume values for base, mid and treble
     music_vis_process_base(&volume_arr.volume_base);
     music_vis_process_mid(&volume_arr.volume_mid);
     music_vis_process_treble(&volume_arr.volume_treble_left, &volume_arr.volume_treble_right);

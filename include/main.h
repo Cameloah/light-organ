@@ -23,3 +23,15 @@
 // time module settings
 #define TIMEZONE_SEC_OFFSET             3600  // CET is UTC+1
 #define DAYLIGHT_SAVING_SEC_OFFSET      3600  // Additional offset for DST (CEST is UTC+2)
+
+typedef enum {
+    MODE_BLACKOUT   = 0,
+    MODE_MUSIC      = 1,
+    MODE_AMBIENT    = 2,
+    MODE_DMX        = 3
+} mode_num_t;
+
+
+
+
+void led_mode_switch(uint8_t module_index);
