@@ -53,7 +53,38 @@
             </label>
           </div>
         </div>
+        <br>
+
+        
+        <hr width="auto" />
         <br><br>
+
+        <form action="/control" method="POST">
+          <h2>MQTT Settings</h2>
+
+          <div class="twocolumns">
+            <div class="setting_box">
+              <label for="mqtt_user">User</label>
+            </div>
+            <div class="setting_box">
+              <input type="text" id="mqtt_user" name="mqtt_user"><br>
+            </div>
+          </div>
+
+          <div class="twocolumns">
+            <div class="setting_box">
+              <label for="mqtt_pass">Password</label>
+            </div>
+            <div class="setting_box">
+              <input type="password" id="mqtt_pass" name="mqtt_pass"><br>
+            </div>
+          </div>
+          <br><br>
+
+          <input type="submit" value="Submit">
+          <br><br><br>
+
+        </form>
         
       </div>
     </div>
@@ -61,8 +92,22 @@
 </div>
 
 <script>
-
+  const eventSource = new EventSource("/events");
   fetchAndUpdate();
+
+  eventSource.onopen = () => {
+    console.log("SSE connection opened successfully.");
+  };
+
+  eventSource.addEventListener("state", (event) => {
+    if (event.data === "update") {
+      fetchAndUpdate();
+    }
+  });
+
+  eventSource.onerror = (error) => {
+    console.error("SSE error:", error);
+  };
 
   function fetchAndUpdate() {
     fetch("/control/mode")
@@ -71,6 +116,14 @@
         const autoUpdateConfig = responseBody.split("\n");
         document.getElementById("ambientMode").checked = autoUpdateConfig[0] === "1";
         document.getElementById("musicMode").checked = autoUpdateConfig[1] === "1";
+      });
+
+    fetch("/control/mqtt-config")
+      .then(response => response.text())
+      .then(responseBody => {
+        const wifiCredentials = responseBody.split("\n");
+        document.getElementById("mqtt_user").value = wifiCredentials[0];
+        document.getElementById("mqtt_pass").value = wifiCredentials[1];
       });
   }
 
