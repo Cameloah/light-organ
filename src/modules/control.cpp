@@ -89,7 +89,7 @@ void mqtt_connect(String user, String pass) {
     DualSerial.print("connecting to mqtt broker...");
     unsigned long startAttemptTime = millis();
     while (!mqtt.connect("lichtorgel", user.c_str(), pass.c_str())) {
-        if (millis() - startAttemptTime > TIMOUT_MQTT_CONNECT_MS) {
+        if (millis() - startAttemptTime > TIMEOUT_MQTT_CONNECT_MS) {
             ram_log_notify(RAM_LOG_ERROR_SYSTEM, "mqtt connection timed out!", true);
             return;
         }
@@ -209,12 +209,12 @@ void control_init() {
 static unsigned long lastUpdate = 0;
 
 void control_update() {
-    /*
+    
     unsigned long now = millis();
-    if (now - lastUpdate >= 5000) { // 5000 milliseconds = 5 seconds
+    if (now - lastUpdate >= INTERVAL_MQTT_CHECK) { // 5000 milliseconds = 5 seconds
         lastUpdate = now;
         if (!mqtt.connected())
-            reconnect();
-    }*/
+            mqtt_connect(control_settings.getString("mqtt_user"), control_settings.getString("mqtt_pass"));
+    }
     mqtt.loop();
 }
