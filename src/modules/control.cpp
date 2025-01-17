@@ -16,7 +16,8 @@ AsyncEventSource events("/events");
 WiFiClient mqtt_client;
 PubSubClient mqtt(mqtt_client);	
 
-const char* mqtt_server = "192.168.0.22";
+const char* mqtt_server = "homeassistant.local";
+bool flag_mqtt_was_connected = false;
 
 void control_switch(mode_num_t mode){
     switch (mode)
@@ -90,13 +91,17 @@ void mqtt_connect(String user, String pass) {
     unsigned long startAttemptTime = millis();
     while (!mqtt.connect("lichtorgel", user.c_str(), pass.c_str())) {
         if (millis() - startAttemptTime > TIMEOUT_MQTT_CONNECT_MS) {
-            ram_log_notify(RAM_LOG_ERROR_SYSTEM, "mqtt connection timed out!", true);
+            if (flag_mqtt_was_connected) {
+                ram_log_notify(RAM_LOG_ERROR_SYSTEM, "mqtt connection timed out!", true);
+                flag_mqtt_was_connected = false;
+            }
             return;
         }
         DualSerial.print(".");
         delay(500);
     }
     ram_log_notify(RAM_LOG_INFO, "mqtt connected", true);
+    flag_mqtt_was_connected = true;
 
     mqtt.setCallback(mqtt_control_callback);
     mqtt.subscribe("lichtorgel/light");
@@ -213,8 +218,12 @@ void control_update() {
     unsigned long now = millis();
     if (now - lastUpdate >= INTERVAL_MQTT_CHECK) { // 5000 milliseconds = 5 seconds
         lastUpdate = now;
-        if (!mqtt.connected())
+        if (!mqtt.connected()) {
+            if (flag_mqtt_was_connected)
+                ram_log_notify(RAM_LOG_ERROR_SYSTEM, "mqtt connection lost. reconnecting...", true);
+
             mqtt_connect(control_settings.getString("mqtt_user"), control_settings.getString("mqtt_pass"));
+        }
     }
     mqtt.loop();
 }

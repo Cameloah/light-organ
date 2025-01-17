@@ -42,8 +42,8 @@ LED_MUSHROOMS_SET_t led_array_set_current;      // contains the values generated
 LED_MUSHROOMS_SET_t led_array_set_previous;     // contains the values of the next module in line
 
 uint8_t blend_opacity = 0;
-uint8_t module_index_current = 2;
-uint8_t module_index_previous = 2;
+uint8_t module_index_current = 0;
+uint8_t module_index_previous = 0;
 
 #define EFFECT_MODULE_NUM                     3
 
@@ -56,7 +56,7 @@ void animations_update(LED_MUSHROOMS_SET_t *set) {
 }
 
 void blackout_update(LED_MUSHROOMS_SET_t *set) {
-    set->leds_redshrooms_left = CRGB::Black;
+    set->leds_largeshrooms_left = CRGB::Black;
     set->leds_largeshrooms_right = CRGB::Black;
     set->leds_whiteshrooms = CRGB::Black;
     set->leds_redshrooms_left = CRGB::Black;
@@ -71,7 +71,7 @@ void (*module_update[EFFECT_MODULE_NUM])(LED_MUSHROOMS_SET_t *set) = {
 };
 
 void led_mode_switch(uint8_t module_index) {
-    led_array_set_previous = led_array_set_current;
+    led_array_set_previous = led_array_set_real;
     blackout_update(&led_array_set_current);
     module_index_previous = module_index_current;
     module_index_current = module_index;
@@ -162,7 +162,7 @@ void loop() {
         blend(led_array_set_previous.leds_redshrooms_right, led_array_set_current.leds_redshrooms_right,
             led_array_set_real.leds_redshrooms_right, LED_NUM_TREBLE_2, blend_opacity);
 
-        blend_opacity++;
+        blend_opacity = (blend_opacity + 3) > 255 ? 255 : (blend_opacity + 3);
     }
 
     else module_update[module_index_current](&led_array_set_real);
