@@ -6,7 +6,7 @@
 
 #define FW_VERSION_MAJOR                    1
 #define FW_VERSION_MINOR                    1
-#define FW_VERSION_PATCH                    0
+#define FW_VERSION_PATCH                    1
 
 // set the github user and source repo here "user/repo"
 #define GITHUB_REPO     "Cameloah/light-organ"
