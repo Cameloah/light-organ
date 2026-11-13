@@ -14,9 +14,7 @@
 #include "tools/filters.h"
 #include "tools/loop_timer.h"
 
-#include "github_update.h"
-#include "memory_module.h"
-#include "ram_log.h"
+#include "version.h"
 
 // ------------------ SYSTEM -------------------- //
 
@@ -25,7 +23,7 @@ TaskHandle_t Task_network;
 void loop_core_0(void* parameter) {
     for(;;) {
         // run wifi update routine
-        project_utils_update();
+        ProjectUtils.loop();
         ui_serial_comm_handler();
         //dmx_listen();
         control_update();
@@ -85,7 +83,7 @@ void led_mode_switch(uint8_t module_index) {
 void setup() {
 
     // ---------- system ----------- //
-    DualSerial.begin(115200);
+    Serial.begin(115200);
 
     // --------  led setup --------- //
 
@@ -117,8 +115,14 @@ void setup() {
 
     // --------- network ---------- //
 
-    DualSerial.println("Starting Wifi...");
-    project_utils_init("Magic Light Organ");
+    static pu::Config config;
+    config.deviceName = "Magic Light Organ";
+    config.firmwareVersion = pu::Semver{FW_VERSION_MAJOR, FW_VERSION_MINOR, FW_VERSION_PATCH};
+    config.wifiConnectTimeoutMs = 5000;
+    config.githubRepo = GITHUB_REPO;
+    config.githubFirmwareAsset = GITHUB_FW_BIN;
+    // config.adminPassword = "...";   // protects the web pages and OTA uploads
+    ProjectUtils.begin(config);
     control_init();
     
 
@@ -175,10 +179,10 @@ void loop() {
     EVERY_N_SECONDS(5) {
         static bool ambient_mode = true;
         if (ambient_mode) {
-            DualSerial.println("switching to ambient mode");
+            ProjectUtils.console().println("switching to ambient mode");
             led_mode_switch(MODE_AMBIENT);
         } else {
-            DualSerial.println("switching to music mode");
+            ProjectUtils.console().println("switching to music mode");
             led_mode_switch(MODE_MUSIC);
         }
         ambient_mode = !ambient_mode;
@@ -191,8 +195,8 @@ void loop() {
 #ifdef DEBUG_DISPLAY_LOOP_FRQ
     EVERY_N_SECONDS (5) {
         // calculate the loop time and print. serial comm only decreases loop freq when serial.print is called
-        DualSerial.print("loop freq in Hz: ");
-        DualSerial.println(loop_timer_get_loop_freq());
+        ProjectUtils.console().print("loop freq in Hz: ");
+        ProjectUtils.console().println(loop_timer_get_loop_freq());
     }
 #endif
 

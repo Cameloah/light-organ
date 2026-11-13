@@ -1,3 +1,0 @@
-[submodule "lib/ProjectUtils-esp32"]
-	path = lib/ProjectUtils-esp32
-	url = https://github.com/Cameloah/ProjectUtils-esp32.git

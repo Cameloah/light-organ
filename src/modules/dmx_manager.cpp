@@ -4,8 +4,6 @@
 #include "main.h"
 #include "modules/dmx_manager.h"
 
-#include "main_project_utils.h"
-#include "ram_log.h"
 
 int transmitPin = 17;       // TX
 int receivePin = 16;        // RX
@@ -58,7 +56,7 @@ void dmx_listen() {
     if (!packet.err) {
       /* If this is the first DMX data we've received, lets log it! */
       if (!dmxIsConnected) {
-        ram_log_notify(RAM_LOG_INFO, "DMX is connected!", true);
+        ProjectUtils.log().info("DMX is connected!");
         led_mode_switch(3);
         dmxIsConnected = true;
       }
@@ -67,12 +65,12 @@ void dmx_listen() {
     }
 
     else {
-      ram_log_notify(RAM_LOG_INFO, "A DMX error occurred.", true);
+      ProjectUtils.log().info("A DMX error occurred.");
     }
   } 
   
   else if (dmxIsConnected) {
-    ram_log_notify(RAM_LOG_INFO, "DMX was disconnected.", true);
+    ProjectUtils.log().info("DMX was disconnected.");
     led_mode_switch(0);
     dmxIsConnected = false;
   }
