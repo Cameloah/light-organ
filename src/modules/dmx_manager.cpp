@@ -5,21 +5,22 @@
 #include "modules/dmx_manager.h"
 
 
-int transmitPin = 17;       // TX
-int receivePin = 16;        // RX
-int enablePin = 15;         // DE
+static const int transmitPin = 17;       // TX
+static const int receivePin = 16;        // RX
+static const int enablePin = 15;         // DE
 
 
-dmx_port_t dmxPort = 1;
+static const dmx_port_t dmxPort = 1;
 
 /* Now we want somewhere to store our DMX data. Since a single packet of DMX
   data can be up to 513 bytes long, we want our array to be at least that long.
   This library knows that the max DMX packet size is 513, so we can fill in the
   array size with `DMX_PACKET_SIZE`. */
-byte data[DMX_PACKET_SIZE];
+// written by dmx_listen() on the network core, read by dmx_update() on the LED core;
+// a value that is one packet old for a frame is harmless
+static byte data[DMX_PACKET_SIZE];
 
-bool dmxIsConnected = false;
-unsigned long lastUpdate = millis();
+static bool dmxIsConnected = false;
 
 void dmx_init() {
 

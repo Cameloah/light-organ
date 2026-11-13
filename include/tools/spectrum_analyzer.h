@@ -1,16 +1,8 @@
+#pragma once
+
 #include <Arduino.h>
 
-#ifdef __AVR__
-#include <avr/power.h>
-#endif
-
-// #define DEBUG_DISPLAY_SPECTRUM_AMPLITUDES
-
-#define STROBE                      32
-#define RESET                       33
-#define DC_left                     34
-#define DC_right                    35
-
+// number of frequency bands of the analyzer chip (MSGEQ7)
 #define SPECTRUM_CH_NUM             7
 
 typedef struct {
@@ -20,8 +12,6 @@ typedef struct {
 
 extern SPECTRUM_ANALYZER_RAW_BUFFER_t spectrum_analyzer_results;
 
-
-
 /// \brief initializes pin configurations and spectrum shield communication
 ///
 void spectrum_analyzer_init();
@@ -30,8 +20,8 @@ void spectrum_analyzer_init();
 ///
 void spectrum_read_frequencies();
 
-/// \brief computes the total volume from all 7 freq bands
+/// \brief finds the loudest of all bands on both channels
 ///
-/// \return total volume 0 - 1023
+/// \return its amplitude, 0 - 1023
 ///
-uint16_t spectrum_total_volume();
+uint16_t spectrum_loudest_band();

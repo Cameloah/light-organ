@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Arduino.h"
 #include "tools/loop_timer.h"
 
@@ -6,10 +8,6 @@
 
 // how much the stored max value is decreasing per second
 #define FILTERS_SCALE_MAX_VALUE_DECREASE        40.
-
-/// \brief WIP
-///
-float filters_envelopeFilter(uint16_t sample, float filter_factor);
 
 /// \brief scales an input to 0 - 1023 and stores the max reported value in max_value.
 ///        when the max value exceeds the limit, the stored max value will be decreased over time back to the limit

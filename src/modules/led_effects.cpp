@@ -53,7 +53,3 @@ void led_effect_fill_gradient_interval(CRGBSet& led_set, uint8_t start_index, ui
         led_set[i] = blend(start_color,end_color, (start_index + i) * frac);
     }
 }
-
-void testfct(CRGBSet& user_buffer) {
-    user_buffer = CRGB::Red;
-}

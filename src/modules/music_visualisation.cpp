@@ -1,29 +1,83 @@
 #include "modules/music_visualisation.h"
+
+#include "modules/led_effects.h"
+#include "tools/filters.h"
 #include "tools/spectrum_analyzer.h"
 
+// debug and system control options
+// #define DEBUG_DISPLAY_BASS_VALUES
+// #define DEBUG_DISPLAY_MID_VALUES
+
+// bass frequency processing
+#define MUSIC_VIS_SCALE_LIMIT_BASS          400
+#define MUSIC_VIS_BASS_POW_DIVIDER          181.
+#define MUSIC_VIS_BASS_POW_EXPONENT         4
+
+// mid frequency processing
+#define MUSIC_VIS_SCALE_LIMIT_MID           700
+#define MUSIC_VIS_MID_POW_DIVIDER           100.
+#define MUSIC_VIS_MID_POW_EXPONENT          3
+
+// treble frequency processing
+#define MUSIC_VIS_SCALE_LIMIT_TREBLE        300
+#define MUSIC_VIS_TREBLE_POW_DIVIDER        100.
+#define MUSIC_VIS_TREBLE_POW_EXPONENT       3
+
+// trigger for led arrays in percent
+#define MUSIC_VIS_BASS_TRIGGER              40
+#define MUSIC_VIS_TREBLE_TRIGGER            50
+
+// fade integer by which the colors are faded back to black
+#define MUSIC_VIS_BASS_FADE                 5
+#define MUSIC_VIS_BASS_DELAYTOSPARK_MS      1000
+#define MUSIC_VIS_BASS_DELAYINTERSPARK_MS   20
+#define MUSIC_VIS_BASS_TIMESPARKLES_MS      1500
+#define MUSIC_VIS_BASS_SPARKLE_FADE         30
+
+#define MUSIC_VIS_TREBLE_FADE               2
+
+static_assert(LED_NUM_BASS_1 <= LED_EFFECTS_SPARKLE_STATE_ARR_SIZE &&
+                  LED_NUM_BASS_2 <= LED_EFFECTS_SPARKLE_STATE_ARR_SIZE,
+              "the sparkle effect keeps one state per LED");
+
+typedef struct
+{
+    uint16_t volume_bass;
+    uint16_t volume_mid;
+    uint16_t volume_treble_left;
+    uint16_t volume_treble_right;
+} MUSIC_VIS_VOLUME_t;
+
+static void music_vis_process_bass(uint16_t* input);
+static void music_vis_process_mid(uint16_t* input);
+static void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right);
+static void music_vis_animation_largeshrooms(uint16_t* input);
+static void music_vis_animation_whiteshrooms(uint16_t* input);
+static void music_vis_animation_redshrooms(uint16_t* input_left, uint16_t* input_right);
+
 // buffers to store max values for scaling
-float _music_vis_raw_max_input_base           = 0;
-float _music_vis_raw_max_input_mid            = 0;
-float _music_vis_raw_max_input_treble_l       = 0;
-float _music_vis_raw_max_input_treble_r       = 0;
+static float _music_vis_raw_max_input_bass           = 0;
+static float _music_vis_raw_max_input_mid            = 0;
+static float _music_vis_raw_max_input_treble_l       = 0;
+static float _music_vis_raw_max_input_treble_r       = 0;
 
 // references for led array set
-LED_MUSHROOMS_SET_t* _module_led_set;
+static LED_MUSHROOMS_SET_t* _module_led_set;
 
-LED_EFFECTS_SPARKLE_t _music_vis_sparkle_base_left = {
+static LED_EFFECTS_SPARKLE_t _music_vis_sparkle_bass_left = {
     NULL,
-    MUSIC_VIS_BASE_DELAYTOSPARK_MS,
-    MUSIC_VIS_BASE_DELAYINTERSPARK_MS,
+    MUSIC_VIS_BASS_DELAYTOSPARK_MS,
+    MUSIC_VIS_BASS_DELAYINTERSPARK_MS,
     0,
-    MUSIC_VIS_BASE_TIMESPARKLES_MS,
-    MUSIC_VIS_BASE_SPARKLE_FADE,
+    MUSIC_VIS_BASS_TIMESPARKLES_MS,
+    MUSIC_VIS_BASS_SPARKLE_FADE,
 };
 
-LED_EFFECTS_SPARKLE_t _music_vis_sparkle_base_right;
+static LED_EFFECTS_SPARKLE_t _music_vis_sparkle_bass_right;
 
 void music_vis_init() {
     // fill second sparkle buffer with data
-    memcpy(&_music_vis_sparkle_base_right, &_music_vis_sparkle_base_left, sizeof(LED_EFFECTS_SPARKLE_t));
+    memcpy(&_music_vis_sparkle_bass_right, &_music_vis_sparkle_bass_left, sizeof(LED_EFFECTS_SPARKLE_t));
     // initialize the spectrumanalyzer arduino shield
     spectrum_analyzer_init();
 }
@@ -33,8 +87,8 @@ void music_vis_update(LED_MUSHROOMS_SET_t* user_buffer) {
     _module_led_set = user_buffer;
 
     // assign corresponding led array to sparkle stuct buffer
-    _music_vis_sparkle_base_left.led_array = &_module_led_set->leds_largeshrooms_left;
-    _music_vis_sparkle_base_right.led_array = &_module_led_set->leds_largeshrooms_right;
+    _music_vis_sparkle_bass_left.led_array = &_module_led_set->leds_largeshrooms_left;
+    _music_vis_sparkle_bass_right.led_array = &_module_led_set->leds_largeshrooms_right;
 
     // buffer for processed input values
     MUSIC_VIS_VOLUME_t volume_arr;
@@ -42,45 +96,45 @@ void music_vis_update(LED_MUSHROOMS_SET_t* user_buffer) {
     // read the amplitudes of the 7-frequency band
     spectrum_read_frequencies();
 
-    // process volume values for base, mid and treble
-    music_vis_process_base(&volume_arr.volume_base);
+    // process volume values for bass, mid and treble
+    music_vis_process_bass(&volume_arr.volume_bass);
     music_vis_process_mid(&volume_arr.volume_mid);
     music_vis_process_treble(&volume_arr.volume_treble_left, &volume_arr.volume_treble_right);
 
     // animate leds in shrooms
-    music_vis_animation_largeshrooms(&volume_arr.volume_base);
+    music_vis_animation_largeshrooms(&volume_arr.volume_bass);
     music_vis_animation_whiteshrooms(&volume_arr.volume_mid);
     music_vis_animation_redshrooms(&volume_arr.volume_treble_left, &volume_arr.volume_treble_right);
 
 }
 
-void music_vis_process_base(uint16_t* input) {
+static void music_vis_process_bass(uint16_t* input) {
     // select the smaller value from stereo and presave it to buffer
     *input = (spectrum_analyzer_results.amplitude_left[1] > spectrum_analyzer_results.amplitude_right[1])
             ? spectrum_analyzer_results.amplitude_right[1] : spectrum_analyzer_results.amplitude_left[1];
     
-    #ifdef DEBUG_DISPLAY_BASE_VALUES
+    #ifdef DEBUG_DISPLAY_BASS_VALUES
     Serial.print(*input);
     Serial.print("\t");
     #endif
 
     // scale the measured amplitudes to a max of 1023
-    filters_scale(input, _music_vis_raw_max_input_base, MUSIC_VIS_SCALE_LIMIT_BASE);
+    filters_scale(input, _music_vis_raw_max_input_bass, MUSIC_VIS_SCALE_LIMIT_BASS);
     // increase the peak
-    *input = (uint16_t) pow((float) *input / 181., MUSIC_VIS_BASE_POW_EXPONENT);
+    *input = (uint16_t) pow((float) *input / MUSIC_VIS_BASS_POW_DIVIDER, MUSIC_VIS_BASS_POW_EXPONENT);
 
-    #ifdef DEBUG_DISPLAY_BASE_VALUES
+    #ifdef DEBUG_DISPLAY_BASS_VALUES
     Serial.print(*input);
     Serial.print("\t");
-    Serial.print(_music_vis_raw_max_input_base);
+    Serial.print(_music_vis_raw_max_input_bass);
     Serial.print("\t");
-    Serial.println((uint16_t) MUSIC_VIS_BASE_TRIGGER * 10.24);
+    Serial.println((uint16_t) MUSIC_VIS_BASS_TRIGGER * 10.24);
     #endif
 }
 
-void music_vis_process_mid(uint16_t* input) {
-    // use total volume for white mushrooms and presave it to buffer
-    *input = spectrum_total_volume();
+static void music_vis_process_mid(uint16_t* input) {
+    // use the loudest band for white mushrooms and presave it to buffer
+    *input = spectrum_loudest_band();
     // scale the measured amplitudes to a max of 1023
     filters_scale(input, _music_vis_raw_max_input_mid, MUSIC_VIS_SCALE_LIMIT_MID);
     *input = pow(*input / MUSIC_VIS_MID_POW_DIVIDER, MUSIC_VIS_MID_POW_EXPONENT);
@@ -92,7 +146,7 @@ void music_vis_process_mid(uint16_t* input) {
     #endif
 }
 
-void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right) {
+static void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right) {
     // select both stereo channels and presave them in buffers
     *input_left = spectrum_analyzer_results.amplitude_left[5];
     *input_right = spectrum_analyzer_results.amplitude_right[5];
@@ -104,16 +158,16 @@ void music_vis_process_treble(uint16_t* input_left, uint16_t* input_right) {
     *input_right = (uint16_t)pow(*input_right / MUSIC_VIS_TREBLE_POW_DIVIDER, MUSIC_VIS_TREBLE_POW_EXPONENT);
 }
 
-void music_vis_animation_largeshrooms(uint16_t* input) {
+static void music_vis_animation_largeshrooms(uint16_t* input) {
     // fade all leds before new instructions follow
-    fade_raw(_module_led_set->leds_largeshrooms_left, _module_led_set->leds_largeshrooms_left.size(), MUSIC_VIS_BASE_FADE);
-    fade_raw(_module_led_set->leds_largeshrooms_right, _module_led_set->leds_largeshrooms_right.size(), MUSIC_VIS_BASE_FADE);
+    fade_raw(_module_led_set->leds_largeshrooms_left, _module_led_set->leds_largeshrooms_left.size(), MUSIC_VIS_BASS_FADE);
+    fade_raw(_module_led_set->leds_largeshrooms_right, _module_led_set->leds_largeshrooms_right.size(), MUSIC_VIS_BASS_FADE);
 
     bool trigger_flag = false;
 
     // check for trigger
-    if(*input > (uint16_t) MUSIC_VIS_BASE_TRIGGER * 10.24) {
-        // apply base color
+    if(*input > (uint16_t) MUSIC_VIS_BASS_TRIGGER * 10.24) {
+        // apply bass color
         _module_led_set->leds_largeshrooms_left = CRGB::Red;
         _module_led_set->leds_largeshrooms_right = CRGB::Red;
         // raise trigger flag
@@ -121,11 +175,11 @@ void music_vis_animation_largeshrooms(uint16_t* input) {
     }
 
     // release some sparkles after a predefined delay
-    led_effects_run_sparkle(&_music_vis_sparkle_base_right, &trigger_flag);
-    led_effects_run_sparkle(&_music_vis_sparkle_base_left, &trigger_flag);
+    led_effects_run_sparkle(&_music_vis_sparkle_bass_right, &trigger_flag);
+    led_effects_run_sparkle(&_music_vis_sparkle_bass_left, &trigger_flag);
 }
 
-void music_vis_animation_whiteshrooms(uint16_t* input) {
+static void music_vis_animation_whiteshrooms(uint16_t* input) {
     // map total volume to number of white shrooms
     uint8_t num_leds_triggered = map(*input, 0, 1024, 0, _module_led_set->leds_whiteshrooms.size());
     // use special fade fct
@@ -134,7 +188,7 @@ void music_vis_animation_whiteshrooms(uint16_t* input) {
     led_effect_fill_gradient_interval(_module_led_set->leds_whiteshrooms, 0, num_leds_triggered, CRGB::Blue, CRGB::Yellow);
 }
 
-void music_vis_animation_redshrooms(uint16_t* input_left, uint16_t* input_right) {
+static void music_vis_animation_redshrooms(uint16_t* input_left, uint16_t* input_right) {
     // fade all leds before new instructions follow
     fade_raw(_module_led_set->leds_redshrooms_left, _module_led_set->leds_redshrooms_left.size(), MUSIC_VIS_TREBLE_FADE);
     fade_raw(_module_led_set->leds_redshrooms_right, _module_led_set->leds_redshrooms_right.size(), MUSIC_VIS_TREBLE_FADE);

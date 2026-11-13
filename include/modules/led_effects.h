@@ -1,3 +1,5 @@
+#pragma once
+
 #include <FastLED.h>
 
 #define LED_EFFECTS_SPARKLE_STATE_ARR_SIZE                  32
@@ -31,5 +33,3 @@ void led_effects_run_sparkle(LED_EFFECTS_SPARKLE_t* user_buffer, bool* trigger);
 void led_effects_glow_fade(CRGBSet& user_buffer, uint8_t fade_factor_min, uint8_t fade_factor_max);
 
 void led_effect_fill_gradient_interval(CRGBSet& led_set, uint8_t start_index, uint8_t end_index, CRGB start_color, CRGB end_color);
-
-void testfct(CRGBSet& user_buffer);

@@ -1,15 +1,193 @@
 #include "modules/twinkle.h"
 
+//  TwinkleFOX: Twinkling 'holiday' lights that fade in and out.
+//  Colors are chosen from a palette; a few palettes are provided.
+//
+//  This December 2015 implementation improves on the December 2014 version
+//  in several ways:
+//  - smoother fading, compatible with any colors and any palettes
+//  - easier control of twinkle speed and twinkle density
+//  - supports an optional 'background color'
+//  - takes even less RAM: zero RAM overhead per pixel
+//  - illustrates a couple of interesting techniques (uh oh...)
+//
+//  The idea behind this (new) implementation is that there's one
+//  basic, repeating pattern that each pixel follows like a waveform:
+//  The brightness rises from 0..255 and then falls back down to 0.
+//  The brightness at any given point in time can be determined as
+//  as a function of time, for example:
+//    brightness = sine( time ); // a sine wave of brightness over time
+//
+//  So the way this implementation works is that every pixel follows
+//  the exact same wave function over time.  In this particular case,
+//  I chose a sawtooth triangle wave (triwave8) rather than a sine wave,
+//  but the idea is the same: brightness = triwave8( time ).  
+//  
+//  Of course, if all the pixels used the exact same wave form, and 
+//  if they all used the exact same 'clock' for their 'time base', all
+//  the pixels would brighten and dim at once -- which does not look
+//  like twinkling at all.
+//
+//  So to achieve random-looking twinkling, each pixel is given a 
+//  slightly different 'clock' signal.  Some of the clocks run faster, 
+//  some run slower, and each 'clock' also has a random offset from zero.
+//  The net result is that the 'clocks' for all the pixels are always out 
+//  of sync from each other, producing a nice random distribution
+//  of twinkles.
+//
+//  The 'clock speed adjustment' and 'time offset' for each pixel
+//  are generated randomly.  One (normal) approach to implementing that
+//  would be to randomly generate the clock parameters for each pixel 
+//  at startup, and store them in some arrays.  However, that consumes
+//  a great deal of precious RAM, and it turns out to be totally
+//  unnessary!  If the random number generate is 'seeded' with the
+//  same starting value every time, it will generate the same sequence
+//  of values every time.  So the clock adjustment parameters for each
+//  pixel are 'stored' in a pseudo-random number generator!  The PRNG 
+//  is reset, and then the first numbers out of it are the clock 
+//  adjustment parameters for the first pixel, the second numbers out
+//  of it are the parameters for the second pixel, and so on.
+//  In this way, we can 'store' a stable sequence of thousands of
+//  random clock adjustment parameters in literally two bytes of RAM.
+//
+//  There's a little bit of fixed-point math involved in applying the
+//  clock speed adjustments, which are expressed in eighths.  Each pixel's
+//  clock speed ranges from 8/8ths of the system clock (i.e. 1x) to
+//  23/8ths of the system clock (i.e. nearly 3x).
+//
+//  On a basic Arduino Uno or Leonardo, this code can twinkle 300+ pixels
+//  smoothly at over 50 updates per seond.
+//
+//  -Mark Kriegsman, December 2015
+
+
+// Overall twinkle speed.
+// 0 (VERY slow) to 8 (VERY fast).  
+// 4, 5, and 6 are recommended, default is 4.
+#define TWINKLE_SPEED 2
+
+// Overall twinkle density.
+// 0 (NONE lit) to 8 (ALL lit at once).  
+// Default is 5.
+#define TWINKLE_DENSITY 8
+
+// How often to change color palettes.
+#define SECONDS_PER_PALETTE  20
+// Also: toward the bottom of the file is an array 
+// called "ActivePaletteList" which controls which color
+// palettes are used; you can add or remove color palettes
+// from there freely.
+
+// If AUTO_SELECT_BACKGROUND_COLOR is set to 1,
+// then for any palette where the first two entries 
+// are the same, a dimmed version of that color will
+// automatically be used as the background color.
+#define AUTO_SELECT_BACKGROUND_COLOR 1
+
+// If COOL_LIKE_INCANDESCENT is set to 1, colors will 
+// fade out slighted 'reddened', similar to how
+// incandescent bulbs change color as they get dim down.
+#define COOL_LIKE_INCANDESCENT 1
+
+
+// A mostly red palette with green accents and white trim.
+// "CRGB::Gray" is used as white to keep the brightness more uniform.
+static const TProgmemRGBPalette16 RedGreenWhite_p FL_PROGMEM =
+{  CRGB::Green, CRGB::Green, CRGB::Green, CRGB::Green,
+   CRGB::Green, CRGB::Green, CRGB::Green, CRGB::Green,
+   CRGB::Green, CRGB::Green, CRGB::Gray, CRGB::Gray,
+   CRGB::Red, CRGB::Red, CRGB::Red, CRGB::Red };
+
+// A mostly (dark) green palette with red berries.
+#define Holly_Green 0x00580c
+#define Holly_Red   0xB00402
+static const TProgmemRGBPalette16 Holly_p FL_PROGMEM =
+{  Holly_Green, Holly_Green, Holly_Green, Holly_Green,
+   Holly_Green, Holly_Green, Holly_Green, Holly_Green,
+   Holly_Green, Holly_Green, Holly_Green, Holly_Green,
+   Holly_Green, Holly_Green, Holly_Green, Holly_Red 
+};
+
+// A red and white striped palette
+// "CRGB::Gray" is used as white to keep the brightness more uniform.
+static const TProgmemRGBPalette16 RedWhite_p FL_PROGMEM =
+{  CRGB::Green,  CRGB::Green,  CRGB::Green,  CRGB::Green, 
+   CRGB::Green, CRGB::Green, CRGB::Gray, CRGB::Gray,
+   CRGB::Green,  CRGB::Green,  CRGB::Green,  CRGB::Green, 
+   CRGB::Gray, CRGB::Gray, CRGB::Gray, CRGB::Gray };
+
+// A mostly blue palette with white accents.
+// "CRGB::Gray" is used as white to keep the brightness more uniform.
+static const TProgmemRGBPalette16 BlueWhite_p FL_PROGMEM =
+{  CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, 
+   CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, 
+   CRGB::Blue, CRGB::Blue, CRGB::Blue, CRGB::Blue, 
+   CRGB::Blue, CRGB::Gray, CRGB::Gray, CRGB::Gray };
+
+// A pure "fairy light" palette with some brightness variations
+#define HALFFAIRY ((CRGB::FairyLight & 0xFEFEFE) / 2)
+#define QUARTERFAIRY ((CRGB::FairyLight & 0xFCFCFC) / 4)
+static const TProgmemRGBPalette16 FairyLight_p FL_PROGMEM =
+{  CRGB::FairyLight, CRGB::FairyLight, CRGB::FairyLight, CRGB::FairyLight, 
+   HALFFAIRY,        HALFFAIRY,        CRGB::FairyLight, CRGB::FairyLight, 
+   QUARTERFAIRY,     QUARTERFAIRY,     CRGB::FairyLight, CRGB::FairyLight, 
+   CRGB::FairyLight, CRGB::FairyLight, CRGB::FairyLight, CRGB::FairyLight };
+
+// A palette of soft snowflakes with the occasional bright one
+static const TProgmemRGBPalette16 Snow_p FL_PROGMEM =
+{  0x304048, 0x304048, 0x304048, 0x304048,
+   0x304048, 0x304048, 0x304048, 0x304048,
+   0x304048, 0x304048, 0x304048, 0x304048,
+   0x304048, 0x304048, 0x304048, 0xE0F0FF };
+
+// A palette reminiscent of large 'old-school' C9-size tree lights
+// in the five classic colors: red, orange, green, blue, and white.
+#define C9_Red    0xB80400
+#define C9_Orange 0x902C02
+#define C9_Green  0x046002
+#define C9_Blue   0x070758
+#define C9_White  0x606820
+static const TProgmemRGBPalette16 RetroC9_p FL_PROGMEM =
+{  C9_Red,    C9_Orange, C9_Red,    C9_Orange,
+   C9_Orange, C9_Red,    C9_Orange, C9_Red,
+   C9_Green,  C9_Green,  C9_Green,  C9_Green,
+   C9_Blue,   C9_Blue,   C9_Blue,
+   C9_White
+};
+
+// A cold, icy pale blue palette
+#define Ice_Blue1 0x0C1040
+#define Ice_Blue2 0x182080
+#define Ice_Blue3 0x5080C0
+static const TProgmemRGBPalette16 Ice_p FL_PROGMEM =
+{
+  Ice_Blue1, Ice_Blue1, Ice_Blue1, Ice_Blue1,
+  Ice_Blue1, Ice_Blue1, Ice_Blue1, Ice_Blue1,
+  Ice_Blue1, Ice_Blue1, Ice_Blue1, Ice_Blue1,
+  Ice_Blue2, Ice_Blue2, Ice_Blue2, Ice_Blue3
+};
+
+
+
+
+//  Initializer
+
+static void drawTwinkles( CRGBSet& L);
+static CRGB computeOneTwinkle( uint32_t ms, uint8_t salt);
+static uint8_t attackDecayWave8( uint8_t i);
+static void coolLikeIncandescent( CRGB& c, uint8_t phase);
+static void chooseNextColorPalette( CRGBPalette16& pal);
+
 
 // Background color for 'unlit' pixels
 // Can be set to CRGB::Black if desired.
-CRGB gBackgroundColor = CRGB::Black; 
+static CRGB gBackgroundColor = CRGB::Black; 
 // Example of dim incandescent fairy light background color
 // CRGB gBackgroundColor = CRGB(CRGB::FairyLight).nscale8_video(16);
 
 // Add or remove palette names from this list to control which color
 // palettes are used, and in what order.
-const TProgmemRGBPalette16* ActivePaletteList[] = {
+static const TProgmemRGBPalette16* const ActivePaletteList[] = {
   //&RetroC9_p,
   &BlueWhite_p,
   //&RainbowColors_p,
@@ -27,8 +205,8 @@ const TProgmemRGBPalette16* ActivePaletteList[] = {
 };
 
 
-CRGBPalette16 gCurrentPalette;
-CRGBPalette16 gTargetPalette;
+static CRGBPalette16 gCurrentPalette;
+static CRGBPalette16 gTargetPalette;
 
 
 
@@ -54,7 +232,7 @@ void twinkle_update(CRGBSet& user_leds)
 }
 
 
-void drawTwinkles( CRGBSet& L)
+static void drawTwinkles( CRGBSet& L)
 {
   // "PRNG16" is the pseudorandom number generator
   // It MUST be reset to the same starting value each time
@@ -119,7 +297,7 @@ void drawTwinkles( CRGBSet& L)
 }
 
 
-CRGB computeOneTwinkle( uint32_t ms, uint8_t salt)
+static CRGB computeOneTwinkle( uint32_t ms, uint8_t salt)
 {
   uint16_t ticks = ms >> (8-TWINKLE_SPEED);
   uint8_t fastcycle8 = ticks;
@@ -147,7 +325,7 @@ CRGB computeOneTwinkle( uint32_t ms, uint8_t salt)
 }
 
 
-uint8_t attackDecayWave8( uint8_t i)
+static uint8_t attackDecayWave8( uint8_t i)
 {
   if( i < 86) {
     return i * 3;
@@ -158,7 +336,7 @@ uint8_t attackDecayWave8( uint8_t i)
 }
 
 
-void coolLikeIncandescent( CRGB& c, uint8_t phase)
+static void coolLikeIncandescent( CRGB& c, uint8_t phase)
 {
   if( phase < 128) return;
 
@@ -168,7 +346,7 @@ void coolLikeIncandescent( CRGB& c, uint8_t phase)
 }
 
 
-void chooseNextColorPalette( CRGBPalette16& pal)
+static void chooseNextColorPalette( CRGBPalette16& pal)
 {
   const uint8_t numberOfPalettes = sizeof(ActivePaletteList) / sizeof(ActivePaletteList[0]);
   static uint8_t whichPalette = -1; 

@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "functional": "cpp",
-        "*.tcc": "cpp",
-        "optional": "cpp",
-        "system_error": "cpp",
-        "regex": "cpp"
-    }
-}
