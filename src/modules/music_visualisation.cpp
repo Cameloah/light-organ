@@ -71,6 +71,7 @@ static LED_EFFECTS_SPARKLE_t _music_vis_sparkle_bass_left = {
     0,
     MUSIC_VIS_BASS_TIMESPARKLES_MS,
     MUSIC_VIS_BASS_SPARKLE_FADE,
+    {},
 };
 
 static LED_EFFECTS_SPARKLE_t _music_vis_sparkle_bass_right;
