@@ -35,11 +35,11 @@ String ui_info() {
              (unsigned long)(uptime_s / 3600 % 24), (unsigned long)(uptime_s / 60 % 60),
              (unsigned long)(uptime_s % 60));
 
-    String info = String("Wifi mode:          ") + pu::WifiManager::modeName() + "\n" +
-                  "Wifi connected to:  " + (WiFi.isConnected() ? WiFi.SSID() : "not connected") + "\n" +
-                  "IP-address:         " + (WiFi.isConnected() ? WiFi.localIP().toString() : "") + "\n" +
-                  "Uptime:             " + uptime + "\n" +
-                  "Boot message:       " + boot_msg + "\n\n";
+    String info =
+        String("Wifi mode:          ") + pu::WifiManager::modeName() + "\n" +
+        "Wifi connected to:  " + (WiFi.isConnected() ? WiFi.SSID() : "not connected") + "\n" +
+        "IP-address:         " + (WiFi.isConnected() ? WiFi.localIP().toString() : "") + "\n" +
+        "Uptime:             " + uptime + "\n" + "Boot message:       " + boot_msg + "\n\n";
 
     console().print(fw_version + info);
     ProjectUtils.log().printTo(console());

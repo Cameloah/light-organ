@@ -101,7 +101,8 @@ static void control_build_page() {
 
     home.section("Light");
     home.select(control_settings, "mode", "Mode", {MODE_NAMES[0], MODE_NAMES[1], MODE_NAMES[2]})
-        .onChange([]() { control_switch(static_cast<mode_num_t>(control_settings.getInt("mode"))); });
+        .onChange(
+            []() { control_switch(static_cast<mode_num_t>(control_settings.getInt("mode"))); });
 
     home.section("MQTT");
     const auto reconnect = []() {

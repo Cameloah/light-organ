@@ -3,9 +3,9 @@
 #include "Arduino.h"
 
 // overall loop freq. of the main loop, use this in all timedependent modules
-#define FREQ_LOOP_CYCLE_HZ            100
+#define FREQ_LOOP_CYCLE_HZ 100
 
-#define FREQ_REPORT_UPPER_LIMIT       1.1       // a frame counts as too slow above 110% of its time
+#define FREQ_REPORT_UPPER_LIMIT 1.1 // a frame counts as too slow above 110% of its time
 
 /// \brief marks the start of a loop iteration. Call first thing in loop().
 ///

@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 // number of frequency bands of the analyzer chip (MSGEQ7)
-#define SPECTRUM_CH_NUM             7
+#define SPECTRUM_CH_NUM 7
 
 typedef struct {
     uint16_t amplitude_left[SPECTRUM_CH_NUM];
