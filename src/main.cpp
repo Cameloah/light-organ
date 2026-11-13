@@ -16,6 +16,8 @@
 
 #include "version.h"
 
+#include <atomic>
+
 // ------------------ SYSTEM -------------------- //
 
 TaskHandle_t Task_network;
@@ -43,7 +45,6 @@ uint8_t blend_opacity = 0;
 uint8_t module_index_current = 0;
 uint8_t module_index_previous = 0;
 
-#define EFFECT_MODULE_NUM                     3
 
 void animations_update(LED_MUSHROOMS_SET_t *set) {
     twinkle_update(reinterpret_cast<CRGBSet &>(*reinterpret_cast<CRGB *>(&set->leds_largeshrooms_left)));
@@ -61,14 +62,27 @@ void blackout_update(LED_MUSHROOMS_SET_t *set) {
     set->leds_redshrooms_right = CRGB::Black;
 }
 
-// holds effects that program will cycle through
-void (*module_update[EFFECT_MODULE_NUM])(LED_MUSHROOMS_SET_t *set) = {
-        blackout_update,
-        music_vis_update,
-        animations_update,
+// one effect per mode, in the order of mode_num_t
+void (*const module_update[])(LED_MUSHROOMS_SET_t *set) = {
+        blackout_update,    // MODE_BLACKOUT
+        music_vis_update,   // MODE_MUSIC
+        animations_update,  // MODE_AMBIENT
+        dmx_update,         // MODE_DMX
 };
+const uint8_t EFFECT_MODULE_NUM = sizeof(module_update) / sizeof(module_update[0]);
+static_assert(MODE_DMX + 1 == sizeof(module_update) / sizeof(module_update[0]), "one effect per mode");
 
+// mode asked for by another task, taken over by the next LED frame; -1 = none
+std::atomic<int> requested_mode(-1);
+
+void led_request_mode(mode_num_t mode) {
+    requested_mode.store(mode);
+}
+
+// Only ever called from loop(), so the LED buffers are only touched by one core.
 void led_mode_switch(uint8_t module_index) {
+    if (module_index >= EFFECT_MODULE_NUM)
+        return;
     led_array_set_previous = led_array_set_real;
     blackout_update(&led_array_set_current);
     module_index_previous = module_index_current;
@@ -145,8 +159,12 @@ void setup() {
 void loop() {
     // ---------- system ----------- //
 
-    // save t_0 time stamp in loop_timer
-    t_0 = micros();
+    loop_timer_start_cycle();
+
+    // take over a mode change requested by the network task
+    const int mode = requested_mode.exchange(-1);
+    if (mode >= 0)
+        led_mode_switch(mode);
 
 
     // ----------- leds ------------ //
@@ -190,8 +208,6 @@ void loop() {
 
     // ---------- system ----------- //
 
-    loop_timer++;
-
 #ifdef DEBUG_DISPLAY_LOOP_FRQ
     EVERY_N_SECONDS (5) {
         // calculate the loop time and print. serial comm only decreases loop freq when serial.print is called
@@ -202,7 +218,7 @@ void loop() {
 
 #ifdef SYSCTRL_LOOPTIMER
     // keep loop at constant cycle frequency
-    loop_timer_check_cycle_freq();
+    loop_timer_end_cycle();
 #endif
 }
     

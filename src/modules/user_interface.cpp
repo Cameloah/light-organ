@@ -9,7 +9,6 @@
 
 #include "main.h"
 #include "modules/user_interface.h"
-#include "tools/loop_timer.h"
 #include "version.h"
 
 static Stream& console() {
@@ -95,9 +94,6 @@ void ui_serial_comm_handler() {
     // listen for user input, from USB serial or the web console
     if (console().available() <= 0)
         return;
-
-    // lets pause the loop time reporting for 1 iteration
-    loop_timer_skip_flag = true;
 
     // import the line and split off the first word as command key
     String line = console().readStringUntil('\n');

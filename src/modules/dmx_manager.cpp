@@ -57,7 +57,7 @@ void dmx_listen() {
       /* If this is the first DMX data we've received, lets log it! */
       if (!dmxIsConnected) {
         ProjectUtils.log().info("DMX is connected!");
-        led_mode_switch(3);
+        led_request_mode(MODE_DMX);
         dmxIsConnected = true;
       }
 
@@ -71,7 +71,7 @@ void dmx_listen() {
   
   else if (dmxIsConnected) {
     ProjectUtils.log().info("DMX was disconnected.");
-    led_mode_switch(0);
+    led_request_mode(MODE_BLACKOUT);
     dmxIsConnected = false;
   }
 }

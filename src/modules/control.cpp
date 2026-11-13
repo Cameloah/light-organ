@@ -3,60 +3,56 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 
-pu::Settings control_settings;
+static pu::Settings control_settings;
+
+// ---------------- MODE ------------------ //
+
+// Shown on the web page; the position of each name is its mode_num_t value.
+static const char* const MODE_NAMES[] = {"Off", "Music", "Ambient"};
 
 // ---------------- MQTT CONTROL ------------------ //
 
-WiFiClient mqtt_client;
-PubSubClient mqtt(mqtt_client);
+static WiFiClient mqtt_client;
+static PubSubClient mqtt(mqtt_client);
 
 static const char* mqtt_server = "homeassistant.local";
 static bool flag_mqtt_was_connected = false;
 static bool flag_mqtt_reconnect = true; // connect at the first update and after changed credentials
-static bool firstMessage = true;
 static unsigned long lastUpdate = 0;
 
-void control_switch(mode_num_t mode) {
-    switch (mode) {
-    case MODE_BLACKOUT:
-        led_mode_switch(MODE_BLACKOUT);
-        control_settings.set("musicMode", false);
-        control_settings.set("ambientMode", false);
-        mqtt.publish("lichtorgel/light/music/state", "off");
-        mqtt.publish("lichtorgel/light/ambient/state", "off");
-        break;
+// The broker hands out a retained command right after subscribing. It would override the mode
+// stored on the device, so commands arriving this soon after a (re)connect are ignored.
+static const uint32_t RETAINED_WINDOW_MS = 1000;
+static uint32_t ignore_commands_until_ms = 0;
 
-    case MODE_MUSIC:
-        led_mode_switch(MODE_MUSIC);
-        control_settings.set("musicMode", true);
-        control_settings.set("ambientMode", false);
-        mqtt.publish("lichtorgel/light/music/state", "music_on");
-        mqtt.publish("lichtorgel/light/ambient/state", "off");
-        break;
-
-    case MODE_AMBIENT:
-        led_mode_switch(MODE_AMBIENT);
-        control_settings.set("musicMode", false);
-        control_settings.set("ambientMode", true);
-        mqtt.publish("lichtorgel/light/ambient/state", "ambient_on");
-        mqtt.publish("lichtorgel/light/music/state", "off");
-        break;
-
-    default:
-        break;
-    }
+static void control_publish_state() {
+    const int32_t mode = control_settings.getInt("mode");
+    mqtt.publish("lichtorgel/light/music/state", mode == MODE_MUSIC ? "music_on" : "off");
+    mqtt.publish("lichtorgel/light/ambient/state", mode == MODE_AMBIENT ? "ambient_on" : "off");
 }
 
-void mqtt_control_callback(char* topic, byte* payload, unsigned int length) {
+// Stores the mode, switches the LEDs and reports the new state to Home Assistant.
+// Always called from the network task (or from setup() before that task starts).
+static void control_switch(mode_num_t mode) {
+    if (mode > MODE_AMBIENT) {
+        return; // DMX is switched by the DMX module itself and not stored
+    }
+    if (control_settings.getInt("mode") != mode) {
+        control_settings.set("mode", static_cast<int>(mode));
+    }
+    led_request_mode(mode);
+    control_publish_state();
+}
+
+static void mqtt_control_callback(char* topic, byte* payload, unsigned int length) {
     String message;
     for (unsigned int i = 0; i < length; i++) {
         message += (char)payload[i];
     }
     ProjectUtils.console().println("Message arrived: " + message);
 
-    if (firstMessage) {
-        ProjectUtils.console().println("skipping first message");
-        firstMessage = false;
+    if (static_cast<int32_t>(millis() - ignore_commands_until_ms) < 0) {
+        ProjectUtils.console().println("ignoring retained message after connecting");
         return;
     }
 
@@ -73,7 +69,7 @@ void mqtt_control_callback(char* topic, byte* payload, unsigned int length) {
 }
 
 // One connection attempt. Called again by control_update() after INTERVAL_MQTT_CHECK.
-void mqtt_connect() {
+static void mqtt_connect() {
     const String user = control_settings.getString("mqtt_user");
     const String pass = control_settings.getString("mqtt_pass");
     if (user.isEmpty() || !ProjectUtils.wifi().isConnected()) {
@@ -93,21 +89,19 @@ void mqtt_connect() {
     flag_mqtt_was_connected = true;
 
     mqtt.setCallback(mqtt_control_callback);
+    ignore_commands_until_ms = millis() + RETAINED_WINDOW_MS;
     mqtt.subscribe("lichtorgel/light");
+    control_publish_state(); // Home Assistant may have missed changes while disconnected
 }
 
 // ---------------- WEB CONTROL ------------------ //
 
-void control_build_page() {
+static void control_build_page() {
     pu::Page& home = ProjectUtils.web().home("Magic Mushroom Light");
 
     home.section("Light");
-    home.toggle(
-        "Ambient mode", []() { return control_settings.getBool("ambientMode"); },
-        [](bool on) { control_switch(on ? MODE_AMBIENT : MODE_BLACKOUT); });
-    home.toggle(
-        "Music mode", []() { return control_settings.getBool("musicMode"); },
-        [](bool on) { control_switch(on ? MODE_MUSIC : MODE_BLACKOUT); });
+    home.select(control_settings, "mode", "Mode", {MODE_NAMES[0], MODE_NAMES[1], MODE_NAMES[2]})
+        .onChange([]() { control_switch(static_cast<mode_num_t>(control_settings.getInt("mode"))); });
 
     home.section("MQTT");
     const auto reconnect = []() {
@@ -125,11 +119,20 @@ void control_build_page() {
 
 void control_init() {
     control_settings.begin("control", &ProjectUtils.log());
-    control_settings.define("musicMode", false);
-    control_settings.define("ambientMode", false);
+    control_settings.define("mode", -1); // -1: not stored yet
     control_settings.define("mqtt_user", "");
     control_settings.define("mqtt_pass", "");
+    // Up to firmware 1.1 the mode was stored as two flags; read once to carry it over.
+    control_settings.define("musicMode", false);
+    control_settings.define("ambientMode", false);
     control_settings.loadAll();
+
+    if (control_settings.getInt("mode") < 0) {
+        const mode_num_t mode = control_settings.getBool("musicMode")     ? MODE_MUSIC
+                                : control_settings.getBool("ambientMode") ? MODE_AMBIENT
+                                                                          : MODE_BLACKOUT;
+        control_settings.set("mode", static_cast<int>(mode));
+    }
 
     control_build_page();
 
@@ -137,13 +140,7 @@ void control_init() {
         ProjectUtils.log().warn("mqtt credentials not set");
     }
 
-    if (control_settings.getBool("musicMode")) {
-        control_switch(MODE_MUSIC);
-    } else if (control_settings.getBool("ambientMode")) {
-        control_switch(MODE_AMBIENT);
-    } else {
-        control_switch(MODE_BLACKOUT);
-    }
+    control_switch(static_cast<mode_num_t>(control_settings.getInt("mode")));
 }
 
 void control_update() {

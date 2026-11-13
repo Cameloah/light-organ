@@ -19,4 +19,7 @@ typedef enum {
 
 
 
-void led_mode_switch(uint8_t module_index);
+/// \brief switches the LEDs to another mode, blending over from the current one.
+/// Safe to call from any task: the switch itself happens at the start of the next LED frame,
+/// on the core that draws the LEDs.
+void led_request_mode(mode_num_t mode);

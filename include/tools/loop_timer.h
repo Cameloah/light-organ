@@ -1,21 +1,23 @@
+#pragma once
+
 #include "Arduino.h"
 
 // overall loop freq. of the main loop, use this in all timedependent modules
 #define FREQ_LOOP_CYCLE_HZ            100
 
-#define FREQ_REPORT_UPPER_LIMIT       1.1       // equals  to 90%
+#define FREQ_REPORT_UPPER_LIMIT       1.1       // a frame counts as too slow above 110% of its time
 
-extern uint32_t loop_timer;
-extern uint64_t t_0;
-extern bool loop_timer_skip_flag;
+/// \brief marks the start of a loop iteration. Call first thing in loop().
+///
+void loop_timer_start_cycle();
 
-/// \brief calculates loop frequency, only correct when 
-///        loop_timer is updated every loop iteration
-/// \return loop frequency
+/// \brief waits for the rest of the cycle time so the loop runs at FREQ_LOOP_CYCLE_HZ.
+///        Frames that took too long are counted and reported in the log at most every
+///        few minutes. Call last thing in loop().
+///
+void loop_timer_end_cycle();
+
+/// \brief average loop frequency since the last call
+/// \return loop frequency in Hz
 ///
 float loop_timer_get_loop_freq();
-
-/// \brief measures loop cycle time and adds delay 
-///        if neccessary to meet predefined FREQ_LOOP_CYCLE_HZ
-///
-void loop_timer_check_cycle_freq();
