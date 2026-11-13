@@ -15,7 +15,7 @@ static Stream& console() {
     return ProjectUtils.console();
 }
 
-void ui_info_help() {
+static void ui_info_help() {
     console().println("info                          - system information about the device");
 }
 
@@ -25,8 +25,9 @@ String ui_info() {
 
     // get reset reason
     String boot_msg = String(esp_reset_reason(), HEX);
-    if (boot_msg.length() == 1)
+    if (boot_msg.length() == 1) {
         boot_msg = "0" + boot_msg;
+    }
     boot_msg = "0x" + boot_msg;
 
     const uint32_t uptime_s = static_cast<uint32_t>(esp_timer_get_time() / 1000000);
@@ -47,7 +48,7 @@ String ui_info() {
     return fw_version;
 }
 
-void ui_debug_help() {
+static void ui_debug_help() {
     console().println("debug --reboot                        - reboot device\n"
                       "      --update                        - update to the latest FW version\n"
                       "      --update --version [vX.X.X]     - update to the desired FW version");
@@ -68,12 +69,14 @@ static void ui_update(const String& version) {
     console().println("Update failed: " + updater.status().message);
 }
 
-void ui_debug(const String& arguments) {
+static void ui_debug(const String& arguments) {
     if (arguments == "--reboot") {
         console().println("rebooting...");
         delay(1000);
         esp_restart();
-    } else if (arguments == "--update") {
+        return; // not reached
+    }
+    if (arguments == "--update") {
         ui_update("");
     } else if (arguments.startsWith("--update --version ")) {
         String version = arguments.substring(strlen("--update --version "));
@@ -85,34 +88,37 @@ void ui_debug(const String& arguments) {
     }
 }
 
-void ui_help() {
+static void ui_help() {
     ui_info_help();
     ui_debug_help();
 }
 
 void ui_serial_comm_handler() {
     // listen for user input, from USB serial or the web console
-    if (console().available() <= 0)
+    if (console().available() <= 0) {
         return;
+    }
 
     // import the line and split off the first word as command key
     String line = console().readStringUntil('\n');
     line.trim();
-    if (line.isEmpty())
+    if (line.isEmpty()) {
         return;
+    }
     const int space = line.indexOf(' ');
     const String command = space < 0 ? line : line.substring(0, space);
     String arguments = space < 0 ? String() : line.substring(space + 1);
     arguments.trim();
 
-    if (command == "info")
+    if (command == "info") {
         ui_info();
-    else if (command == "debug")
+    } else if (command == "debug") {
         ui_debug(arguments);
-    else if (command == "help")
+    } else if (command == "help") {
         ui_help();
-    else
+    } else {
         console().println("\nUnknown command. Type 'help' for a list of availabe commands.");
+    }
 
     console().println();
 }

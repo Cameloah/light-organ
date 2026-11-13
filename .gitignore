@@ -8,4 +8,6 @@ CMakeLists.txt
 CMakeListsPrivate.txt
 cmake-build-debug
 cmake-build-esp32dev
-cmake-build-uno.vscode/settings.json
+cmake-build-uno
+.vscode/settings.json
+compile_commands.json

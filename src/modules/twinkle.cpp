@@ -1,5 +1,9 @@
 #include "modules/twinkle.h"
 
+// Ported from the FastLED TwinkleFOX example. Its bit arithmetic works on unsigned 8- and 16-bit
+// values that C++ promotes to int; they are never negative, so the warning does not apply.
+// NOLINTBEGIN(bugprone-signed-bitwise)
+
 //  TwinkleFOX: Twinkling 'holiday' lights that fade in and out.
 //  Colors are chosen from a palette; a few palettes are provided.
 //
@@ -206,7 +210,7 @@ static void drawTwinkles(CRGBSet& L) {
     // if AUTO_SELECT_BACKGROUND_COLOR == 1, and the first two colors of
     // the current palette are identical, then a deeply faded version of
     // that color is used for the background color
-    CRGB bg;
+    CRGB bg = CRGB::Black;
     if ((AUTO_SELECT_BACKGROUND_COLOR == 1) && (gCurrentPalette[0] == gCurrentPalette[1])) {
         bg = gCurrentPalette[0];
         uint8_t bglight = bg.getAverageLight();
@@ -238,7 +242,7 @@ static void drawTwinkles(CRGBSet& L) {
         CRGB c = computeOneTwinkle(myclock30, myunique8);
 
         uint8_t cbright = c.getAverageLight();
-        int16_t deltabright = cbright - backgroundBrightness;
+        auto deltabright = static_cast<int16_t>(cbright - backgroundBrightness);
         if (deltabright >= 32 || (!bg)) {
             // If the new pixel is significantly brighter than the background color,
             // use the new color.
@@ -269,7 +273,7 @@ static CRGB computeOneTwinkle(uint32_t ms, uint8_t salt) {
     }
 
     uint8_t hue = slowcycle8 - salt;
-    CRGB c;
+    CRGB c = CRGB::Black;
     if (bright > 0) {
         c = ColorFromPalette(gCurrentPalette, hue, bright, NOBLEND);
         if (COOL_LIKE_INCANDESCENT == 1) {
@@ -284,15 +288,15 @@ static CRGB computeOneTwinkle(uint32_t ms, uint8_t salt) {
 static uint8_t attackDecayWave8(uint8_t i) {
     if (i < 86) {
         return i * 3;
-    } else {
-        i -= 86;
-        return 255 - (i + (i / 2));
     }
+    i -= 86;
+    return 255 - (i + (i / 2));
 }
 
 static void coolLikeIncandescent(CRGB& c, uint8_t phase) {
-    if (phase < 128)
+    if (phase < 128) {
         return;
+    }
 
     uint8_t cooling = (phase - 128) >> 4;
     c.g = qsub8(c.g, cooling);
@@ -306,3 +310,4 @@ static void chooseNextColorPalette(CRGBPalette16& pal) {
 
     pal = *(ActivePaletteList[whichPalette]);
 }
+// NOLINTEND(bugprone-signed-bitwise)

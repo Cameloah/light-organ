@@ -85,11 +85,16 @@ the built `firmware.bin` of every run as a download.
 
 ## Development
 
-Formatting is enforced by clang-format through pre-commit; GitHub Actions checks formatting and
-builds the firmware on every push.
+Formatting is enforced by clang-format through pre-commit. On every push GitHub Actions checks
+formatting, builds the firmware, and runs cppcheck and clang-tidy (the same bug-pattern checks as
+ProjectUtils-esp32, without its naming rules).
 
 ```sh
 uv tool install pre-commit   # or: pipx install pre-commit
 pre-commit install
 git config blame.ignoreRevsFile .git-blame-ignore-revs   # skip the formatting commit in blame
+
+pio check --fail-on-defect=low      # cppcheck
+uv tool install clang-tidy==23.1.4  # the version CI uses
+python3 scripts/run_clang_tidy.py   # clang-tidy; apply its suggestions by hand
 ```

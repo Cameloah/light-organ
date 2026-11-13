@@ -30,7 +30,7 @@ void dmx_init() {
       respond to DMX commands. It will need at least one DMX personality. Since
       this is an example, we will use a default personality which only uses 1 DMX
       slot in its footprint. */
-    dmx_config_t config = DMX_CONFIG_DEFAULT;
+    dmx_config_t config = DMX_CONFIG_DEFAULT; // NOLINT(bugprone-signed-bitwise): library macro
     dmx_personality_t personalities[] = {{1, "Default Personality"}};
     int personality_count = 1;
     dmx_driver_install(dmxPort, &config, personalities, personality_count);
@@ -49,8 +49,8 @@ void dmx_listen() {
       officially times out. That amount of time is converted into ESP32 clock
       ticks using the constant `DMX_TIMEOUT_TICK`. If it takes longer than that
       amount of time to receive data, this if statement will evaluate to false. */
-    if (dmx_receive(dmxPort, &packet, DMX_TIMEOUT_TICK)) {
-        if (!packet.err) {
+    if (dmx_receive(dmxPort, &packet, DMX_TIMEOUT_TICK) > 0) {
+        if (packet.err == DMX_OK) {
             /* If this is the first DMX data we've received, lets log it! */
             if (!dmxIsConnected) {
                 ProjectUtils.log().info("DMX is connected!");

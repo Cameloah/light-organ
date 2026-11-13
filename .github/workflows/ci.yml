@@ -33,3 +33,21 @@ jobs:
         with:
           name: firmware
           path: .pio/build/*/firmware.bin
+
+  analysis:
+    name: Static analysis (cppcheck, clang-tidy)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-analysis-${{ hashFiles('platformio.ini') }}
+      - run: pip install platformio
+      # same version as CLANG_TIDY_VERSION in scripts/run_clang_tidy.py
+      - run: pip install clang-tidy==23.1.4
+      - run: pio check --fail-on-defect=low
+      - run: python3 scripts/run_clang_tidy.py

@@ -1,0 +1,39 @@
+---
+# Same checks as ProjectUtils-esp32, without its naming rules.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-throwing-static-initialization,
+  clang-analyzer-*,
+  performance-*,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  -misc-include-cleaner,
+  -misc-const-correctness,
+  -misc-header-include-cycle,
+  -misc-use-anonymous-namespace,  # file-local names use C-style static here
+  modernize-use-nullptr,
+  modernize-use-override,
+  modernize-use-bool-literals,
+  modernize-use-emplace,
+  modernize-loop-convert,
+  modernize-deprecated-headers,
+  modernize-redundant-void-arg,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-pro-type-cstyle-cast,
+  cppcoreguidelines-virtual-class-destructor,
+  readability-braces-around-statements,
+  readability-else-after-return,
+  readability-implicit-bool-conversion,
+  readability-inconsistent-declaration-parameter-name,
+  readability-misleading-indentation,
+  readability-redundant-control-flow,
+  readability-redundant-string-cstr,
+  readability-simplify-boolean-expr
+# only the project's own headers; libraries and the framework are not checked
+HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: '.*/\.pio/.*|.*/\.platformio/.*'
+CheckOptions:
+  - { key: readability-implicit-bool-conversion.AllowPointerConditions, value: true }

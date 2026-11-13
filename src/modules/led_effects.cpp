@@ -1,7 +1,7 @@
 #include "modules/led_effects.h"
 #include "tools/loop_timer.h"
 
-void led_effects_run_sparkle(LED_EFFECTS_SPARKLE_t* user_buffer, bool* trigger) {
+void led_effects_run_sparkle(LED_EFFECTS_SPARKLE_t* user_buffer, const bool* trigger) {
 
     CRGBSet& leds = *user_buffer->led_array;
     if (*trigger) {
@@ -26,8 +26,9 @@ void led_effects_run_sparkle(LED_EFFECTS_SPARKLE_t* user_buffer, bool* trigger) 
             leds[n] = CRGB::White;
             // fade progressively
             uint8_t prefade_factor =
-                map(millis() - user_buffer->timer_to_spark_t0 - user_buffer->delay_to_spark_ms, 0,
-                    user_buffer->time_sparkle_duration_ms, 0, 255);
+                map(static_cast<long>(millis() - user_buffer->timer_to_spark_t0 -
+                                      user_buffer->delay_to_spark_ms),
+                    0, user_buffer->time_sparkle_duration_ms, 0, 255);
             leds[n].fadeToBlackBy(prefade_factor);
             // mark this led as used
             user_buffer->sparkle_state[n] = true;
@@ -36,16 +37,19 @@ void led_effects_run_sparkle(LED_EFFECTS_SPARKLE_t* user_buffer, bool* trigger) 
 
     for (int led_index = 0; led_index < leds.size(); led_index++) {
         // search array for sparkled leds to fade to black
-        if (user_buffer->sparkle_state[led_index] == true) {
+        if (user_buffer->sparkle_state[led_index]) {
             leds[led_index].fadeToBlackBy(user_buffer->factor_fade_to_black);
         }
     }
 }
 
 void led_effects_glow_fade(CRGBSet& user_buffer, uint8_t fade_factor_min, uint8_t fade_factor_max) {
-    float fade_fraction = (fade_factor_max - fade_factor_min) / (float)user_buffer.size();
-    for (uint8_t i = 0; i < user_buffer.size(); i++) {
-        fade_raw(&user_buffer[i], 1, fade_factor_max - (fade_fraction * i));
+    const float fade_fraction = static_cast<float>(fade_factor_max - fade_factor_min) /
+                                static_cast<float>(user_buffer.size());
+    for (int i = 0; i < user_buffer.size(); i++) {
+        fade_raw(&user_buffer[i], 1,
+                 static_cast<uint8_t>(static_cast<float>(fade_factor_max) -
+                                      fade_fraction * static_cast<float>(i)));
     }
 }
 

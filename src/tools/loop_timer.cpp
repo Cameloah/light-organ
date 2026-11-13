@@ -19,7 +19,7 @@ void loop_timer_start_cycle() {
 
 float loop_timer_get_loop_freq() {
     const uint32_t now = millis();
-    const float loop_time_ms = cycles > 0 ? (float)(now - freq_window_start_ms) / cycles : 0;
+    const float loop_time_ms = cycles > 0 ? (float)(now - freq_window_start_ms) / (float)cycles : 0;
     cycles = 0;
     freq_window_start_ms = now;
     return loop_time_ms > 0 ? 1000.f / loop_time_ms : 0;
@@ -33,8 +33,9 @@ void loop_timer_end_cycle() {
         delayMicroseconds(CYCLE_US - elapsed_us);
     } else if (elapsed_us > REPORT_LIMIT_US) {
         overruns++;
-        if (elapsed_us > longest_us)
+        if (elapsed_us > longest_us) {
             longest_us = elapsed_us;
+        }
     }
 
     const uint32_t now = millis();

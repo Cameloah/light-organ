@@ -32,8 +32,8 @@ static CRGBPalette16 pacifica_palette_3 = {
 static CRGBSet* user_buffer;
 
 static void pacifica_loop();
-static void pacifica_one_layer(CRGBPalette16& p, uint16_t cistart, uint16_t wavescale, uint8_t bri,
-                               uint16_t ioff);
+static void pacifica_one_layer(const CRGBPalette16& p, uint16_t cistart, uint16_t wavescale,
+                               uint8_t bri, uint16_t ioff);
 
 void ocean_update(CRGBSet& user_leds) {
 
@@ -73,12 +73,12 @@ static void pacifica_loop() {
 }
 
 // Add one layer of waves into the led array
-static void pacifica_one_layer(CRGBPalette16& p, uint16_t cistart, uint16_t wavescale, uint8_t bri,
-                               uint16_t ioff) {
+static void pacifica_one_layer(const CRGBPalette16& p, uint16_t cistart, uint16_t wavescale,
+                               uint8_t bri, uint16_t ioff) {
     uint16_t ci = cistart;
     uint16_t waveangle = ioff;
     uint16_t wavescale_half = (wavescale / 2) + 20;
-    for (uint16_t i = 0; i < user_buffer->len; i++) {
+    for (int i = 0; i < user_buffer->len; i++) {
         waveangle += 250;
         uint16_t s16 = sin16(waveangle) + 32768;
         uint16_t cs = scale16(s16, wavescale_half) + wavescale_half;

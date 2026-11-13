@@ -26,7 +26,7 @@ typedef struct {
 /// array of the leds
 /// \param trigger pointer to the trigger flag
 ///
-void led_effects_run_sparkle(LED_EFFECTS_SPARKLE_t* user_buffer, bool* trigger);
+void led_effects_run_sparkle(LED_EFFECTS_SPARKLE_t* user_buffer, const bool* trigger);
 
 void led_effects_glow_fade(CRGBSet& user_buffer, uint8_t fade_factor_min, uint8_t fade_factor_max);
 

@@ -12,4 +12,4 @@ void twinkle_init();
 
 /// \brief draws the next frame of twinkles into the given LEDs
 ///
-void twinkle_update(CRGBSet& L);
+void twinkle_update(CRGBSet& user_leds);

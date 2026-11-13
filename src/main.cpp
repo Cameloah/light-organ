@@ -19,7 +19,7 @@
 static TaskHandle_t Task_network;
 
 // everything network related runs here, on core 0; the LEDs are drawn by loop() on core 1
-static void loop_core_0(void* parameter) {
+static void loop_core_0(void* /*parameter*/) {
     for (;;) {
         ProjectUtils.loop();
         ui_serial_comm_handler();
@@ -77,8 +77,9 @@ void led_request_mode(mode_num_t mode) {
 
 // Only ever called from loop(), so the LED buffers are only touched by one core.
 static void led_mode_switch(uint8_t module_index) {
-    if (module_index >= EFFECT_MODULE_NUM)
+    if (module_index >= EFFECT_MODULE_NUM) {
         return;
+    }
     led_array_set_previous = led_array_set_real;
     blackout_update(&led_array_set_current);
     module_index_previous = module_index_current;
@@ -153,8 +154,9 @@ void loop() {
 
     // take over a mode change requested by the network task
     const int mode = requested_mode.exchange(-1);
-    if (mode >= 0)
+    if (mode >= 0) {
         led_mode_switch(mode);
+    }
 
     // ----------- leds ------------ //
 
@@ -180,8 +182,9 @@ void loop() {
         blend_opacity = (blend_opacity + 3) > 255 ? 255 : (blend_opacity + 3);
     }
 
-    else
+    else {
         module_update[module_index_current](&led_array_set_real);
+    }
 
     // execute led colors
     FastLED.show();
