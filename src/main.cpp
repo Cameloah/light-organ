@@ -123,6 +123,10 @@ void setup() {
                                                           LED_NUM_TREBLE_2)
         .setCorrection(TypicalLEDStrip);
 
+    // No temporal dithering: at 100 frames per second its alternating between neighbouring
+    // brightness levels shows as flicker in dim colours (ocean blues, twinkle fade-outs).
+    FastLED.setDither(DISABLE_DITHER);
+
     // set all leds to black
     blackout_update(&led_array_set_real);
     FastLED.show();
