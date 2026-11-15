@@ -179,6 +179,14 @@ static const TProgmemRGBPalette16* const ActivePaletteList[] = {
 
 static CRGBPalette16 gCurrentPalette;
 static CRGBPalette16 gTargetPalette;
+// Background shown while it is followed smoothly. Taken from the palette being blended
+// into, not from the blend itself: during a palette change the blend switches between having a
+// background and not, and crosses the brightness steps below, which made all background pixels
+// jump at once.
+static CRGB gBackground = CRGB::Black;
+
+static CRGB backgroundFor(const CRGBPalette16& palette);
+static void easeTowards(CRGB& current, const CRGB& target);
 
 void twinkle_init() {
     delay(1000); // safety startup delay
@@ -192,6 +200,7 @@ void twinkle_update(CRGBSet& user_leds) {
 
     EVERY_N_MILLISECONDS(10) {
         nblendPaletteTowardPalette(gCurrentPalette, gTargetPalette, 12);
+        easeTowards(gBackground, backgroundFor(gTargetPalette));
     }
 
     drawTwinkles(user_leds);
@@ -206,24 +215,7 @@ static void drawTwinkles(CRGBSet& L) {
 
     uint32_t clock32 = millis();
 
-    // Set up the background color, "bg".
-    // if AUTO_SELECT_BACKGROUND_COLOR == 1, and the first two colors of
-    // the current palette are identical, then a deeply faded version of
-    // that color is used for the background color
-    CRGB bg = CRGB::Black;
-    if ((AUTO_SELECT_BACKGROUND_COLOR == 1) && (gCurrentPalette[0] == gCurrentPalette[1])) {
-        bg = gCurrentPalette[0];
-        uint8_t bglight = bg.getAverageLight();
-        if (bglight > 64) {
-            bg.nscale8_video(16); // very bright, so scale to 1/16th
-        } else if (bglight > 16) {
-            bg.nscale8_video(64); // not that bright, so scale to 1/4th
-        } else {
-            bg.nscale8_video(86); // dim, scale to 1/3rd.
-        }
-    } else {
-        bg = gBackgroundColor; // just use the explicitly defined background color
-    }
+    const CRGB bg = gBackground;
 
     uint8_t backgroundBrightness = bg.getAverageLight();
 
@@ -256,6 +248,40 @@ static void drawTwinkles(CRGBSet& L) {
             // just use the background color.
             pixel = bg;
         }
+    }
+}
+
+// The background for a palette: if AUTO_SELECT_BACKGROUND_COLOR == 1 and its first two colors
+// are identical, a deeply faded version of that color, otherwise gBackgroundColor.
+static CRGB backgroundFor(const CRGBPalette16& palette) {
+    if ((AUTO_SELECT_BACKGROUND_COLOR != 1) || (palette[0] != palette[1])) {
+        return gBackgroundColor;
+    }
+    CRGB bg = palette[0];
+    const uint8_t bglight = bg.getAverageLight();
+    if (bglight > 64) {
+        bg.nscale8_video(16); // very bright, so scale to 1/16th
+    } else if (bglight > 16) {
+        bg.nscale8_video(64); // not that bright, so scale to 1/4th
+    } else {
+        bg.nscale8_video(86); // dim, scale to 1/3rd.
+    }
+    return bg;
+}
+
+// Moves each channel a small step towards the target, at least by one so it always arrives.
+static void easeTowards(CRGB& current, const CRGB& target) {
+    for (uint8_t channel = 0; channel < 3; channel++) {
+        const int now = current.raw[channel];
+        const int goal = target.raw[channel];
+        if (now == goal) {
+            continue;
+        }
+        int step = ((goal - now) * 12) / 256;
+        if (step == 0) {
+            step = goal > now ? 1 : -1;
+        }
+        current.raw[channel] = static_cast<uint8_t>(now + step);
     }
 }
 
