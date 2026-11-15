@@ -31,34 +31,29 @@ static CRGBPalette16 pacifica_palette_3 = {
 
 static CRGBSet* user_buffer;
 
-// The four layers are each rounded to whole 8-bit steps; at these dim levels their rounding adds
-// up to a +-1..2 jitter that changes direction many times a second, visible as shimmer. Each LED
-// therefore follows its computed color smoothly: a quarter of the way per frame, kept with 8 extra
-// bits of precision. The slow waves pass through with about 40 ms delay.
-static const int kSmoothLeds = 64;
-static const int32_t kSmoothDivisor = 4; // 1/4 of the way per frame
-static int32_t smoothed[kSmoothLeds][3]; // color value * 256
-static void smooth_output();
+// The layers are added up in fine units and rounded only once per LED and frame. Rounding each
+// layer on its own (as FastLED's 8-bit ColorFromPalette does) makes the layers step at different
+// moments, often in opposite directions, so the sum jumped back and forth between neighbouring
+// levels many times a second although the waves themselves change slowly: visible as shimmer in
+// the dim blues.
+static const int kMaxLeds = 64;
+static const int32_t kFine = 4096; // fine units per color step
+static int32_t sum[kMaxLeds][3];   // the frame being built, in fine units
+static int ledCount = 0;
 
 static void pacifica_loop();
 static void pacifica_one_layer(const CRGBPalette16& p, uint16_t cistart, uint16_t wavescale,
                                uint8_t bri, uint16_t ioff);
 
 void ocean_update(CRGBSet& user_leds) {
-
     user_buffer = &user_leds;
+    ledCount = user_leds.len < kMaxLeds ? user_leds.len : kMaxLeds;
     pacifica_loop();
-    smooth_output();
-}
-
-static void smooth_output() {
-    const int count = user_buffer->len < kSmoothLeds ? user_buffer->len : kSmoothLeds;
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < ledCount; i++) {
         CRGB& led = user_buffer->operator[](i);
         for (int channel = 0; channel < 3; channel++) {
-            int32_t& value = smoothed[i][channel];
-            value += (static_cast<int32_t>(led.raw[channel]) * 256 - value) / kSmoothDivisor;
-            led.raw[channel] = static_cast<uint8_t>((value + 128) / 256);
+            const int32_t level = (sum[i][channel] + kFine / 2) / kFine; // the only rounding
+            led.raw[channel] = static_cast<uint8_t>(level > 255 ? 255 : level);
         }
     }
 }
@@ -81,8 +76,12 @@ static void pacifica_loop() {
     sCIStart3 -= (deltams1 * beatsin88(501, 5, 7));
     sCIStart4 -= (deltams2 * beatsin88(257, 4, 6));
 
-    // Clear out the LED array to a dim background blue-green
-    user_buffer->fill_solid(CRGB(2, 6, 10));
+    // Start from a dim background blue-green
+    for (int i = 0; i < ledCount; i++) {
+        sum[i][0] = 2 * kFine;
+        sum[i][1] = 6 * kFine;
+        sum[i][2] = 10 * kFine;
+    }
 
     // Render each of four layers, with different scales and speeds, that vary over time
     pacifica_one_layer(pacifica_palette_1, sCIStart1, beatsin16(3, 11 * 256, 14 * 256),
@@ -94,20 +93,30 @@ static void pacifica_loop() {
     pacifica_one_layer(pacifica_palette_3, sCIStart4, 5 * 256, beatsin8(8, 10, 28), beat16(601));
 }
 
-// Add one layer of waves into the led array
+// Add one layer of waves, in fine units. Same as FastLED's ColorFromPalette(p, index, bri,
+// LINEARBLEND), but with the position between two palette entries kept to 1/4096 instead of 1/16
+// and nothing rounded.
 static void pacifica_one_layer(const CRGBPalette16& p, uint16_t cistart, uint16_t wavescale,
                                uint8_t bri, uint16_t ioff) {
     uint16_t ci = cistart;
     uint16_t waveangle = ioff;
     uint16_t wavescale_half = (wavescale / 2) + 20;
-    for (int i = 0; i < user_buffer->len; i++) {
+    for (int i = 0; i < ledCount; i++) {
         waveangle += 250;
         uint16_t s16 = sin16(waveangle) + 32768;
         uint16_t cs = scale16(s16, wavescale_half) + wavescale_half;
         ci += cs;
-        uint16_t sindex16 = sin16(ci) + 32768;
-        uint8_t sindex8 = scale16(sindex16, 240);
-        CRGB c = ColorFromPalette(p, sindex8, bri, LINEARBLEND);
-        user_buffer->operator[](i) += c;
+        const uint32_t sindex16 = static_cast<uint16_t>(sin16(ci) + 32768);
+        // palette position 0..240 (as scale16(sindex16, 240)) with 12 fractional bits
+        const uint32_t position = (sindex16 * 240U) >> 4U;
+        const auto entry = static_cast<uint8_t>(position >> 16U); // which of the 16 entries, 0..14
+        const auto between = static_cast<int32_t>((position & 0xFFFFU) >> 4U); // 0..4095
+        const CRGB& from = p[entry];
+        const CRGB& to = p[static_cast<uint8_t>(entry + 1)];
+        for (int channel = 0; channel < 3; channel++) {
+            const int32_t color = from.raw[channel] * kFine +
+                                  (to.raw[channel] - from.raw[channel]) * between; // fine units
+            sum[i][channel] += color * bri / 256;
+        }
     }
 }
