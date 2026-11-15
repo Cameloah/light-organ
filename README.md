@@ -39,8 +39,16 @@ Pins and LED counts are in `include/led_config.h`.
 on the settings page that opens, and the device restarts and joins your network.
 
 **Web page** at the device's address: the mode, the MQTT login and whether the broker is
-connected. The menu leads to the library's pages for WiFi settings, firmware updates, the
-console and device info.
+connected. The menu leads to the library's pages for settings (WiFi, static IP address, access
+point, admin password), firmware updates, the console, the stored values (Memory) and device
+info.
+
+**Admin password:** none by default. Set one under Settings → Admin password; it protects the
+pages and uploads over WiFi. Forgotten: type `password --clear` on the USB serial console.
+
+**Access point:** besides the first start, the device also opens its access point when its WiFi
+has been gone for 2 minutes, and closes it again once WiFi is back. Change this (or give the
+access point a password) under Settings → Access point.
 
 **Home Assistant (MQTT):** the device connects to `homeassistant.local:1883` with the user and
 password entered on its web page.
@@ -68,6 +76,7 @@ broker does not override the mode stored on the device.
 ```sh
 pio run                 # build
 pio run -t upload       # flash over WiFi to the address in platformio.ini
+# with an admin password set: PLATFORMIO_UPLOAD_FLAGS=--auth=<password> pio run -t upload
 pio device monitor      # serial console
 ```
 

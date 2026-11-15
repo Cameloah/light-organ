@@ -135,7 +135,6 @@ void setup() {
     config.wifiConnectTimeoutMs = 5000;
     config.githubRepo = GITHUB_REPO;
     config.githubFirmwareAsset = GITHUB_FW_BIN;
-    // config.adminPassword = "...";   // protects the web pages and OTA uploads
     ProjectUtils.begin(config);
     control_init();
 
