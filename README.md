@@ -41,7 +41,7 @@ on the settings page that opens, and the device restarts and joins your network.
 **Web page** at the device's address: the mode, the MQTT login and whether the broker is
 connected. The menu leads to the library's pages for settings (WiFi, static IP address, access
 point, admin password), firmware updates, the console, the stored values (Memory) and device
-info.
+info (with a factory reset that erases all stored settings).
 
 **Admin password:** none by default. Set one under Settings → Admin password; it protects the
 pages and uploads over WiFi. Forgotten: type `password --clear` on the USB serial console.
