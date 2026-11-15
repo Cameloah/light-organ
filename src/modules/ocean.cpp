@@ -31,6 +31,15 @@ static CRGBPalette16 pacifica_palette_3 = {
 
 static CRGBSet* user_buffer;
 
+// The four layers are each rounded to whole 8-bit steps; at these dim levels their rounding adds
+// up to a +-1..2 jitter that changes direction many times a second, visible as shimmer. Each LED
+// therefore follows its computed color smoothly: a quarter of the way per frame, kept with 8 extra
+// bits of precision. The slow waves pass through with about 40 ms delay.
+static const int kSmoothLeds = 64;
+static const int32_t kSmoothDivisor = 4; // 1/4 of the way per frame
+static int32_t smoothed[kSmoothLeds][3]; // color value * 256
+static void smooth_output();
+
 static void pacifica_loop();
 static void pacifica_one_layer(const CRGBPalette16& p, uint16_t cistart, uint16_t wavescale,
                                uint8_t bri, uint16_t ioff);
@@ -39,6 +48,19 @@ void ocean_update(CRGBSet& user_leds) {
 
     user_buffer = &user_leds;
     pacifica_loop();
+    smooth_output();
+}
+
+static void smooth_output() {
+    const int count = user_buffer->len < kSmoothLeds ? user_buffer->len : kSmoothLeds;
+    for (int i = 0; i < count; i++) {
+        CRGB& led = user_buffer->operator[](i);
+        for (int channel = 0; channel < 3; channel++) {
+            int32_t& value = smoothed[i][channel];
+            value += (static_cast<int32_t>(led.raw[channel]) * 256 - value) / kSmoothDivisor;
+            led.raw[channel] = static_cast<uint8_t>((value + 128) / 256);
+        }
+    }
 }
 
 static void pacifica_loop() {
