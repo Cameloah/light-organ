@@ -11,7 +11,6 @@
 #include "modules/ocean.h"
 #include "modules/twinkle.h"
 #include "modules/user_interface.h"
-#include "tools/frame_capture.h"
 #include "tools/loop_timer.h"
 #include "version.h"
 
@@ -142,7 +141,6 @@ void setup() {
     config.githubFirmwareAsset = GITHUB_FW_BIN;
     ProjectUtils.begin(config);
     control_init();
-    frame_capture_init();
 
     // ------- task setup --------- //
 
@@ -192,7 +190,6 @@ void loop() {
     }
 
     // execute led colors
-    frame_capture_frame(led_array_set_real);
     FastLED.show();
 
     // ---------- system ----------- //
